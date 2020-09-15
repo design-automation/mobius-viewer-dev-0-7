@@ -8,9 +8,12 @@ import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { AppComponent } from './app.component';
 import { GIViewerComponent } from './gi-viewer/gi-viewer.component';
 import { GIViewerModule } from './gi-viewer/gi-viewer';
-import { DataService } from './gi-viewer/data/data.service';
+import { DataService as GIDataService } from './gi-viewer/data/data.service';
+import { DataService } from '@services';
 import { DragDirective } from './directives/dragDropDirective';
 import { MatIconModule } from '@angular/material/icon';
+import { VIEWER_ARR, VIEWER_MOD } from './model-viewers.config';
+import { DataCesiumService } from './gi-cesium-viewer/data/data.cesium.service';
 
 @NgModule({
   declarations: [
@@ -22,12 +25,12 @@ import { MatIconModule } from '@angular/material/icon';
     BrowserModule,
     BrowserAnimationsModule,
     MatIconModule,
-    GIViewerModule
+    ...VIEWER_MOD,
   ],
   entryComponents: [
-    GIViewerComponent
+    ...VIEWER_ARR
   ],
-  providers: [ DataService ],
+  providers: [ GIDataService, DataService, DataCesiumService ],
   bootstrap: [ AppComponent ]
 })
 export class AppModule { }

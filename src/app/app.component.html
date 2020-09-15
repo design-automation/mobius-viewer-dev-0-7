@@ -1,10 +1,16 @@
-<!-- <div *ngIf="!files.length" class="col-12 rmpm dropzone" appDrag (files)="filesDropped($event)">
-	<div class="text-wrapper">
-		<div class="centered">Drop your file here!</div>
-	</div>
-</div> -->
 <div class='viewers-container' appDrag (files)="filesDropped($event)">
-    <div class='content__panel'>
-        <gi-viewer [data]=model></gi-viewer>
+
+    <div class='container__header'>
+        <div class="header-btn-group">
+            <button class='btn' mat-icon-button *ngFor='let view of Viewers;' id='{{view.name}}'
+            [class.active]='view.name == activeView.name' (click)='updateView(view)' title='{{view.name}}'>
+                <mat-icon [svgIcon]='"c"+view.name'></mat-icon>
+            </button>
+        </div>
     </div>
+
+    <div class='content__panel'>
+        <ng-container #vc></ng-container>
+    </div>
+
 </div>

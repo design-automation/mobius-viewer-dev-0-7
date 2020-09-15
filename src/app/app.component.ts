@@ -1,45 +1,129 @@
-import { Component } from '@angular/core';
+import { Component, Injector, Input,
+    ViewChild, ViewContainerRef, ComponentFactoryResolver, OnDestroy, OnInit, DoCheck } from '@angular/core';
 import { MatIconRegistry } from '@angular/material';
 import { DomSanitizer } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 import { _parameterTypes } from '@assets/core/modules';
 import { FileHandle } from './directives/dragDropDirective';
+import { DataService as GIDataService } from './gi-viewer/data/data.service';
+import { Viewers } from './model-viewers.config';
+import { DataService } from './services/data.service';
+import { IView } from './view.interface';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent {
-    model = null;
+export class AppComponent implements DoCheck, OnInit, OnDestroy {
     files: FileHandle[] = [];
 
-    constructor(private matIconRegistry: MatIconRegistry, private domSanitizer: DomSanitizer) {
-        // this.matIconRegistry.addSvgIcon('printDis', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/Print_disabled.svg'));
-        // this.matIconRegistry.addSvgIcon('print', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/iconPrint.svg'));
-        // this.matIconRegistry.addSvgIcon('disabled', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/iconDisabled.svg'));
+    @ViewChild('vc', { read: ViewContainerRef, static: true }) vc: ViewContainerRef;
+    data = null;
+    private views = [];
+    private activeView: IView;
+    Viewers = Viewers;
+
+    constructor(private matIconRegistry: MatIconRegistry, private domSanitizer: DomSanitizer,
+        private injector: Injector, private r: ComponentFactoryResolver, private dataService: DataService,
+        private giDataService: GIDataService) {
         this.matIconRegistry.addSvgIcon('settings', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/Settings.svg'));
         this.matIconRegistry.addSvgIcon('select', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/Select.svg'));
-        // this.matIconRegistry.addSvgIcon('c3D Viewer', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/3D2.svg'));
-        // this.matIconRegistry.addSvgIcon('cGeo Viewer', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/Geo.svg'));
-        // this.matIconRegistry.addSvgIcon('cCytoscape Viewer', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/cyto.svg'));
-        // this.matIconRegistry.addSvgIcon('cMobius Cesium', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/Geo2.svg'));
-        // this.matIconRegistry.addSvgIcon('cConsole', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/Console.svg'));
-        // this.matIconRegistry.addSvgIcon('cHelp', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/Help.svg'));
-        // this.matIconRegistry.addSvgIcon('cSummary', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/Summary.svg'));
         this.matIconRegistry.addSvgIcon('cZoom', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/Zoom.svg'));
-        // this.matIconRegistry.addSvgIcon('cfv', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/Mobius favicon.svg'));
-        // this.matIconRegistry.addSvgIcon('cMenu', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/Three Lines Menu.svg'));
-        // this.matIconRegistry.addSvgIcon('cGallery', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/Home.svg'));
-        // this.matIconRegistry.addSvgIcon('cDashboard', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/Dashboard.svg'));
-        // this.matIconRegistry.addSvgIcon('cFlowchart', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/Flowchart.svg'));
-        // this.matIconRegistry.addSvgIcon('cEditor', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/Node.svg'));
-        // this.matIconRegistry.addSvgIcon('cAdd', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/add.svg'));
-        // this.matIconRegistry.addSvgIcon('cRemove', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/remove.svg'));
-        // this.matIconRegistry.addSvgIcon('cCredits', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/Credits.svg'));
-        // this.matIconRegistry.addSvgIcon('cUpArrow', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/arrowup.svg'));
-        // this.matIconRegistry.addSvgIcon('cDnArrow', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/arrowdown.svg'));
         this.matIconRegistry.addSvgIcon('cControlCam', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/ControlCam.svg'));
         this.matIconRegistry.addSvgIcon('cVisibility', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/visibility.svg'));
+        this.matIconRegistry.addSvgIcon('c3D Viewer', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/3D2.svg'));
+        this.matIconRegistry.addSvgIcon('cGeo Viewer', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/Geo.svg'));
+    }
+    /**
+     * ngOnInit
+     */
+    ngOnInit() {
+        this.activeView = this.Viewers[0];
+        if (this.dataService.activeView) {
+            for (const view of this.Viewers) {
+                if (view.name === this.dataService.activeView) {
+                    this.activeView = view;
+                }
+            }
+        }
+        if (this.activeView.name !== '3D Viewer') {
+            this.giDataService.switch_page = false;
+        }
+        this.updateView( this.activeView );
+    }
+    /**
+     * ngOnDestroy
+     */
+    ngOnDestroy() {
+        this.dataService.activeView = this.activeView.name;
+        this.vc.clear();
+        for (const view in this.views) {
+            if (this.views[view]) {
+                this.views[view].destroy();
+            }
+        }
+    }
+    /**
+     * ngDoCheck
+     */
+    ngDoCheck() {
+        if (this.dataService.helpView[0] === true) {
+            let view;
+            for (const v of this.Viewers) {
+                if (v.name === 'Help') { view = v; }
+            }
+            this.dataService.toggleViewHelp(false);
+            this.updateView(view);
+        } else { this.updateValue(); }
+    }
+    /**
+     * createView
+     * @param view
+     */
+    createView(view: IView) {
+        const component = view.component;
+        const factory = this.r.resolveComponentFactory(component);
+        const componentRef = factory.create(this.injector);
+        /*
+        if (view.name != 'Console'){
+            componentRef.instance["data"] = this.data;
+        }
+        */
+        return componentRef;
+    }
+    /**
+     * updateView
+     * @param view
+     */
+    updateView(view: IView): void {
+        this.activeView = view;
+
+        if ( this.views[ this.activeView.name ] === undefined) {
+            this.views[ this.activeView.name ] = this.createView(view);
+        }
+
+        this.updateValue();
+
+        this.vc.detach();
+        this.vc.insert( this.views[ this.activeView.name ].hostView );
+    }
+    /**
+     * updateValue
+     */
+    updateValue() {
+        try {
+            const componentRef =  this.views[ this.activeView.name ];
+            if (this.activeView.name === 'Help') {
+                // componentRef.instance['output'] = this.dataService.helpView[1];
+            } else if (this.activeView.name !== 'Console') {
+                componentRef.instance['data'] = this.data;
+            // } else {
+            //     componentRef.instance['scrollcheck'] = true;
+            }
+        } catch (ex) {
+            // console.log(`Active View not defined`);
+        }
     }
 
     async filesDropped(files: FileHandle[]) {
@@ -48,10 +132,10 @@ export class AppComponent {
         try {
             const fileReader = new FileReader();
             fileReader.onload = (e) => {
-                this.model = _parameterTypes.newFn();
-                this.model.setJSONStr(fileReader.result);
+                this.data = _parameterTypes.newFn();
+                this.data.setJSONStr(fileReader.result);
             };
-            fileReader.readAsText(f.file, 'json/applications');
+             fileReader.readAsText(f.file, 'json/applications');
         } catch (ex) {
             return;
         }

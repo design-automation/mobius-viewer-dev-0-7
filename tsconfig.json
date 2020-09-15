@@ -20,7 +20,7 @@
         "@shared/*" : ["src/app/shared/*"],
         "@views" : ["src/app/views"],
         "@model-viewers": ["src/app/mobius-viewer/viewers"],
-        "@services" : ["src/app/shared/services"],
+        "@services" : ["src/app/services"],
         "@modules" : ["src/assets/core/modules"],
         "@modules/*" : ["src/assets/core/modules/*"]
       },
