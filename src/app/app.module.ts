@@ -28,6 +28,6 @@ import { MatIconModule } from '@angular/material/icon';
     GIViewerComponent
   ],
   providers: [ DataService ],
-  bootstrap: [AppComponent]
+  bootstrap: [ AppComponent ]
 })
 export class AppModule { }
