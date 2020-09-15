@@ -1,13 +1,19 @@
 {
   "name": "mobius-viewer",
   "version": "0.0.0",
+  "config": {
+    "dev_url": "https://design-automation.github.io/mobius-viewer/",
+    "prod_url": "https://design-automation.github.io/mobius-viewer/"
+  },
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
     "test": "ng test",
     "lint": "ng lint",
-    "e2e": "ng e2e"
+    "e2e": "ng e2e",
+    "deploy": "ng build --base-href=%npm_package_config_prod_url% && npx ngh"
+
   },
   "private": true,
   "dependencies": {
@@ -27,6 +33,7 @@
     "@types/cytoscape": "^3.14.0",
     "@types/proj4": "^2.5.0",
     "angular-split": "^1.0.4",
+    "cesium": "^1.73.0",
     "chroma-js": "^1.4.1",
     "circular-json": "^0.4.0",
     "core-js": "^2.6.5",
