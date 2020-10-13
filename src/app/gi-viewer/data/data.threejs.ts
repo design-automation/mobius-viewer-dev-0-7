@@ -75,7 +75,6 @@ export class DataThreejs extends DataThreejsLookAt {
             this.perspControls.update();
             this.dataService.viewerSettingsUpdated = false;
         }
-
         while (this.scene.children.length > 0) {
             DataThreejs.disposeObjectProperty(this.scene.children[0], 'geometry');
             DataThreejs.disposeObjectProperty(this.scene.children[0], 'texture');
