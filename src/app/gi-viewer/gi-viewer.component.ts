@@ -5,6 +5,7 @@ import { DefaultSettings, SettingsColorMap, Locale } from './gi-viewer.settings'
 import { Component, Input, OnInit } from '@angular/core';
 // import app services
 import { DataService } from './data/data.service';
+import { DataService as MD } from '@services';
 import { ModalService } from './html/modal-window.service';
 import { ColorPickerService } from 'ngx-color-picker';
 import { ThreejsViewerComponent } from './threejs/threejs-viewer.component';
@@ -52,7 +53,8 @@ export class GIViewerComponent implements OnInit {
      */
     constructor(private dataService: DataService,
         private modalService: ModalService,
-        private cpService: ColorPickerService) {
+        private cpService: ColorPickerService,
+        private mainDataService: MD) {
 
         const previous_settings = JSON.parse(localStorage.getItem('mpm_settings'));
         // const devMode = isDevMode();
@@ -471,10 +473,10 @@ export class GIViewerComponent implements OnInit {
         });
     }
     dragSplitEnd(e) {
-        this.dataService.ngSplitGutter = e.sizes[1];
+        this.mainDataService.attribVal = e.sizes[1];
     }
     getSplit() {
-        return this.dataService.ngSplitGutter;
+        return this.mainDataService.attribVal;
     }
 
     checkPublish() {
@@ -503,7 +505,7 @@ export class GIViewerComponent implements OnInit {
 
     @HostListener('mouseleave', [])
     onmouseleave() {
-        this.viewerSplit.notify('end');
+        this.viewerSplit.notify('end', this.viewerSplit.gutterSize);
     }
 }
 

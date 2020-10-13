@@ -82,4 +82,5 @@ export interface ISettings {
             co: boolean
         }
     };
+    version: string;
 }

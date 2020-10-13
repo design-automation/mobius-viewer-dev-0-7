@@ -24,7 +24,8 @@ export function __new__(): GIModel {
  * @param model The model to preprocess.
  */
 export function __preprocess__(__model__: GIModel): void {
-    // TODO
+    const time_stamp = __model__.metadata.nextTimeStamp();
+    // console.log("Time stamp = ", time_stamp);
 }
 //  ===============================================================================================
 /**
@@ -46,6 +47,15 @@ export function __postprocess__(__model__: GIModel): void {
  */
 export function __merge__(model1: GIModel, model2: GIModel): void {
     model1.merge(model2);
+}
+//  ===============================================================================================
+/**
+ * Clone a model.
+ *
+ * @param model The model to clone.
+ */
+export function __clone__(model: GIModel): GIModel {
+    return model.clone();
 }
 //  ===============================================================================================
 /**
@@ -122,7 +132,7 @@ export function __checkModel__(__model__: GIModel): string[] {
 //     const fn_name = 'entities@' + attrib_name;
 //     let ents_arr: TEntTypeIdx|TEntTypeIdx[] = null;
 //     if (entities !== null && entities !== undefined) {
-//         ents_arr = checkIDs(fn_name, 'entities', entities, [IDcheckObj.isID, IDcheckObj.isIDList], null) as TEntTypeIdx|TEntTypeIdx[];
+//         ents_arr = checkIDs(__model__, fn_name, 'entities', entities, [IDcheckObj.isID, IDcheckObj.isIDList], null) as TEntTypeIdx|TEntTypeIdx[];
 //     }
 //     checkAttribName(fn_name , attrib_name);
 //     // --- Error Check ---
@@ -233,7 +243,7 @@ export function __checkModel__(__model__: GIModel): string[] {
 //     const fn_name = 'Inline.__getAttrib__';
 //     let ents_arr: TEntTypeIdx|TEntTypeIdx[] = null;
 //     if (entities !== null && entities !== undefined) {
-//         ents_arr = checkIDs(fn_name, 'entities', entities, [IDcheckObj.isID, IDcheckObj.isIDList], null) as TEntTypeIdx|TEntTypeIdx[];
+//         ents_arr = checkIDs(__model__, fn_name, 'entities', entities, [IDcheckObj.isID, IDcheckObj.isIDList], null) as TEntTypeIdx|TEntTypeIdx[];
 //     }
 //     checkCommTypes(fn_name, 'attrib_name', attrib_name, [TypeCheckObj.isString]);
 //     if (idx_or_key !== null && idx_or_key !== undefined) {

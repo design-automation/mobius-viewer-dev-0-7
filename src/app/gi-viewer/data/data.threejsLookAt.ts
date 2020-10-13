@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { DataService } from '@services';
 import { ISettings } from './data.threejsSettings';
 import { DataThreejsSelect } from './data.threejsSelect';
 
@@ -10,8 +11,8 @@ export class DataThreejsLookAt extends DataThreejsSelect {
     /**
      * Constructor
      */
-    constructor(settings: ISettings) {
-        super(settings);
+    constructor(settings: ISettings, dataService: DataService) {
+        super(settings, dataService);
     }
     /**
      *

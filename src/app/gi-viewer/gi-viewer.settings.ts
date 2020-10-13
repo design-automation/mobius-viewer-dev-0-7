@@ -1,3 +1,4 @@
+import { VERSION } from '@env/version';
 import { Vector3 } from 'three';
 export const DefaultSettings = {
     normals: { show: false, size: 5 },
@@ -80,6 +81,7 @@ export const DefaultSettings = {
             co: true
         }
     },
+    version: VERSION.version
 };
 
 

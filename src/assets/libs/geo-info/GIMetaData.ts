@@ -41,23 +41,25 @@ export class GIMetaData {
             dict: [[], new Map()],
         };
         // filter the metadata values
-        // we only want the valyes that are actually used in this model
+        // we only want the values that are actually used in this model
         for (const key of Object.keys(model_data.attributes)) {
             if (key !== 'model') {
                 for (const attrib of model_data.attributes[key]) {
-                    const data_type = attrib.data_type;
-                    for (const item of attrib.data) {
-                        const attrib_idx = item[0];
-                        const attrib_val = this._data.attrib_values[data_type][0][attrib_idx];
-                        const attrib_key = (data_type === 'number' || data_type === 'string') ? attrib_val : JSON.stringify(attrib_val);
-                        let new_attrib_idx: number;
-                        if (attrib_key in data_filtered[data_type][1]) {
-                            new_attrib_idx = data_filtered[data_type][1].get(attrib_key);
-                        } else {
-                            new_attrib_idx = data_filtered[data_type][0].push(attrib_val) - 1;
-                            data_filtered[data_type][1].set(attrib_key, new_attrib_idx);
+                    const data_type: EAttribDataTypeStrs = attrib.data_type;
+                    if (data_type !== EAttribDataTypeStrs.BOOLEAN) {
+                        for (const item of attrib.data) {
+                            const attrib_idx = item[0];
+                            const attrib_val = this._data.attrib_values[data_type][0][attrib_idx];
+                            const attrib_key = (data_type === 'number' || data_type === 'string') ? attrib_val : JSON.stringify(attrib_val);
+                            let new_attrib_idx: number;
+                            if (attrib_key in data_filtered[data_type][1]) {
+                                new_attrib_idx = data_filtered[data_type][1].get(attrib_key);
+                            } else {
+                                new_attrib_idx = data_filtered[data_type][0].push(attrib_val) - 1;
+                                data_filtered[data_type][1].set(attrib_key, new_attrib_idx);
+                            }
+                            item[0] = new_attrib_idx;
                         }
-                        item[0] = new_attrib_idx;
                     }
                 }
             }
@@ -90,19 +92,9 @@ export class GIMetaData {
      * The attribute indexes in model data will also be renumbered.
      * @param data
      */
-    public mergeJSONData(data: IModelJSON): void {
+    public  mergeJSONData(data: IModelJSON): void {
         const meta_data: IMetaJSONData = data.meta_data;
         const model_data: IModelJSONData = data.model_data;
-        this._data.posi_count += meta_data.posi_count;
-        this._data.vert_count += meta_data.vert_count;
-        this._data.tri_count += meta_data.tri_count;
-        this._data.edge_count += meta_data.edge_count;
-        this._data.wire_count += meta_data.wire_count;
-        this._data.face_count += meta_data.face_count;
-        this._data.point_count += meta_data.point_count;
-        this._data.pline_count += meta_data.pline_count;
-        this._data.pgon_count += meta_data.pgon_count;
-        this._data.coll_count += meta_data.coll_count;
         // update the attribute values in this meta
         // create the renumbering maps
         const attrib_vals: IAttribJSONValues = meta_data.attrib_values;
@@ -172,6 +164,22 @@ export class GIMetaData {
         const ts: number = this._data.time_stamp;
         this._data.time_stamp += 1;
         return ts;
+    }
+    // get next time stamp
+    public getTimeStamp(): number {
+        // const ts: number = this._data.time_stamp;
+        // this._data.time_stamp += 1;
+        return this._data.time_stamp;
+    }
+    //
+    public getEntCounts(): number[] {
+        return [
+            this._data.posi_count,
+            this._data.point_count,
+            this._data.pline_count,
+            this._data.pgon_count,
+            this._data.coll_count
+        ];
     }
     // get next index
     public nextPosi(): number {
@@ -279,6 +287,16 @@ export class GIMetaData {
     // create string for debugging
     public toDebugStr(): string {
         return '' +
+            'posi_count = ' + this._data.posi_count + '\n' +
+            'vert_count = ' + this._data.vert_count + '\n' +
+            'tri_count = ' + this._data.tri_count + '\n' +
+            'edge_count = ' + this._data.edge_count + '\n' +
+            'wire_count = ' + this._data.wire_count + '\n' +
+            'face_count = ' + this._data.face_count + '\n' +
+            'point_count = ' + this._data.point_count + '\n' +
+            'pline_count = ' + this._data.pline_count + '\n' +
+            'pgon_count = ' + this._data.pgon_count + '\n' +
+            'coll_count = ' + this._data.coll_count + '\n' +
             'number: ' +
             JSON.stringify(this._data.attrib_values['number'][0]) +
             JSON.stringify(Array.from(this._data.attrib_values['number'][1])) +
@@ -303,7 +321,9 @@ export class GIMetaData {
         for (const attrib_data of attribs_data) {
             const renum: Map<number, number> = renum_attrib_vals.get(attrib_data.data_type);
             for (const val_i_ents of attrib_data.data) {
-                val_i_ents[0] = renum.get(val_i_ents[0]);
+                if (attrib_data.data_type !== EAttribDataTypeStrs.BOOLEAN) {
+                    val_i_ents[0] = renum.get(val_i_ents[0]);
+                }
             }
         }
     }

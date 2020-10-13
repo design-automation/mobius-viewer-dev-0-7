@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 import { GIModel } from '@libs/geo-info/GIModel';
+import { DataService } from '@services';
 import { ISettings } from './data.threejsSettings';
 // import { WEBVR } from 'three/examples/jsm/vr/WebVR.js';
 
@@ -33,7 +34,7 @@ export class DataThreejsBase {
     // interaction and selection
     public tri_select_map: Map<number, number>;
     public edge_select_map: Map<number, number>;
-    public white_edge_select_map: Map<number, number>;
+    // public white_edge_select_map: Map<number, number>;
     public point_select_map: Map<number, number>;
     public point_label: any[];
     public posis_map: Map<number, number>;
@@ -90,18 +91,23 @@ export class DataThreejsBase {
     protected origin: THREE.Vector3 = new THREE.Vector3(0, 1, 0);
 
     // BufferGeoms
-    protected _buffer_geoms: THREE.BufferGeometry[] = [];
-    protected _all_objs_sphere: THREE.Sphere;
+    // protected _buffer_geoms: THREE.BufferGeometry[] = [];
+    public _all_objs_sphere: THREE.Sphere;
+
+    protected _text_font: THREE.Font;
 
     /**
      * Constructs a new data subscriber.
      */
-    constructor(settings: ISettings) {
+    constructor(settings: ISettings, protected dataService: DataService) {
         this.settings = settings;
         if (!this.settings.directional_light.type) {
             this.settings.directional_light.type = 'directional';
             localStorage.setItem('mpm_settings', JSON.stringify(this.settings));
         }
+        const textFontLoader = new THREE.FontLoader();
+        textFontLoader.load( 'assets/fonts/helvetiker_regular.typeface.json', font => { this._text_font = font; });
+
         // scene
         this.scene = new THREE.Scene();
         // renderer

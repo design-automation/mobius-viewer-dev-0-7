@@ -44,16 +44,6 @@ table {
         background: unset;
       }
     }
-    .material-icons {
-        color: rgba(117,117,117,0.5);
-        width: 16px;
-        height: 16px;
-        margin-left: 5px;
-        &.active {
-            color: #00006d;
-            background: unset;
-        }
-    }
   }
   th.mat-header-cell:not(:first-of-type){
     padding: 0px 5px;

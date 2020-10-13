@@ -3,6 +3,7 @@ import { EEntType, EEntTypeStr } from '@libs/geo-info/common';
 import { DataThreejs } from './data.threejs';
 // import @angular stuff
 import { Injectable } from '@angular/core';
+import { DataService as DS } from '@services';
 /**
  * DataService
  * The data service for the Goe-Info viewer.
@@ -12,7 +13,6 @@ export class DataService {
     // GI Model
     // private _model: GIModel;
     private _data_threejs: DataThreejs;
-    private _ngSplitGutter = 20;
 
     selecting: any = [];
 
@@ -28,7 +28,7 @@ export class DataService {
     /**
      * Create a data service.
      */
-    constructor() {
+    constructor(private ds: DS) {
         this.selected_ents.set(EEntTypeStr[EEntType.POSI], new Map());
         this.selected_ents.set(EEntTypeStr[EEntType.VERT], new Map());
         this.selected_ents.set(EEntTypeStr[EEntType.EDGE], new Map());
@@ -56,7 +56,7 @@ export class DataService {
      * Set the THreejs Scene
      */
     setThreejsScene(settings) {
-        this._data_threejs = new DataThreejs(settings);
+        this._data_threejs = new DataThreejs(settings, this.ds);
     }
 
     /**
@@ -73,8 +73,4 @@ export class DataService {
     clearAll() {
         this.selected_ents.forEach(selected_ents => selected_ents.clear());
     }
-
-    get ngSplitGutter(): number { return this._ngSplitGutter; }
-    set ngSplitGutter(splitGutter: number) { this._ngSplitGutter = splitGutter; }
-
 }

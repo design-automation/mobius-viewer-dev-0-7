@@ -148,6 +148,9 @@ export class ThreejsViewerComponent implements OnInit, DoCheck, OnChanges, OnDes
         this._height = this.container.offsetHeight; // container.client_height;
 
         this._data_threejs = this.dataService.getThreejsScene();
+        if (this.model && this._data_threejs.model !== this.model) {
+            this.updateModel(this.model);
+        }
         this.threeJSViewerService.DataThreejs = this._data_threejs;
         this.container.appendChild(this._data_threejs.renderer.domElement);
         this._data_threejs.renderer.domElement.style.outline = 'none';
@@ -296,7 +299,7 @@ export class ThreejsViewerComponent implements OnInit, DoCheck, OnChanges, OnDes
 
 
     refreshLabels(ent_type): void {
-        if (!this.SelectingEntityType.id) { return; }
+        if (!this.SelectingEntityType.id && this.SelectingEntityType.id !== 0) { return; }
         const allLabels = document.getElementsByClassName(`text-label${EEntTypeStr[ent_type]}`);
         const unSorted = this.dataService.selected_ents.get(EEntTypeStr[ent_type]);
         if (unSorted === undefined) {
@@ -577,7 +580,7 @@ export class ThreejsViewerComponent implements OnInit, DoCheck, OnChanges, OnDes
                     sessionStorage.setItem('mpm_changetab', 'false');
                 }
                 this.getSelectingEntityType();
-                this.refreshTable(event);
+                this.refreshTable();
 
             } catch (ex) {
                 console.error('Error displaying model:', ex);
@@ -733,12 +736,11 @@ export class ThreejsViewerComponent implements OnInit, DoCheck, OnChanges, OnDes
             }
         }
         this.shiftKeyPressed = false;
-
-        this.refreshTable(event);
+        this.refreshTable();
     }
 
-    private refreshTable(event: Event) {
-        this.action.emit({'type': 'eventClicked', 'event': event});
+    private refreshTable() {
+        this.action.emit({'type': 'eventClicked', 'event': new Event('refreshTable')});
         setTimeout(() => {
             this.activateRender();
         }, 0);
@@ -762,7 +764,7 @@ export class ThreejsViewerComponent implements OnInit, DoCheck, OnChanges, OnDes
         this.dataService.selected_ents.forEach(map => {
             map.clear();
         });
-        this.refreshTable(event);
+        this.refreshTable();
         scene.scene_objs_selected.clear();
         // if (this.SelectingEntityType.id === EEntTypeStr[EEntType.COLL]) {
         //     document.getElementById('executeButton').click();
@@ -841,15 +843,15 @@ export class ThreejsViewerComponent implements OnInit, DoCheck, OnChanges, OnDes
                         this.selectPositions(posi, null, null, ent_id);
                     }
                 } else if (intersect0.object.type === 'LineSegments') {
-                    let edge;
-                    const edge_color = (<THREE.LineDashedMaterial>(<THREE.LineSegments> intersect0.object).material).color;
-                    if (edge_color['r'] === 1 && edge_color['b'] === 1 && edge_color['g'] === 1) {
-                        edge = scene.white_edge_select_map.get(intersect0.index / 2);
-                    } else {
-                        edge = scene.edge_select_map.get(intersect0.index / 2);
-                    }
+                    // let edge;
+                    // const edge_color = (<THREE.LineDashedMaterial>(<THREE.LineSegments> intersect0.object).material).color;
+                    // if (edge_color['r'] === 1 && edge_color['b'] === 1 && edge_color['g'] === 1) {
+                    //     edge = scene.white_edge_select_map.get(intersect0.index / 2);
+                    // } else {
+                    //     edge = scene.edge_select_map.get(intersect0.index / 2);
+                    // }
 
-                    // const edge = scene.edge_select_map.get(intersect0.index / 2);
+                    const edge = scene.edge_select_map.get(intersect0.index / 2);
                     const ent_id = `_e_posi${edge}`;
                     if (scene.selected_positions.has(ent_id)) {
                         this.unselectGeom(ent_id, EEntTypeStr[EEntType.POSI]);
@@ -911,14 +913,14 @@ export class ThreejsViewerComponent implements OnInit, DoCheck, OnChanges, OnDes
                         this.selectVertex(point, null, null, ent_id);
                     }
                 } else if (intersect0.object.type === 'LineSegments') {
-                    let edge;
-                    const edge_color = (<THREE.LineDashedMaterial>(<THREE.LineSegments> intersect0.object).material).color;
-                    if (edge_color['r'] === 1 && edge_color['b'] === 1 && edge_color['g'] === 1) {
-                        edge = scene.white_edge_select_map.get(intersect0.index / 2);
-                    } else {
-                        edge = scene.edge_select_map.get(intersect0.index / 2);
-                    }
-                    // const edge = scene.edge_select_map.get(intersect0.index / 2);
+                    // let edge;
+                    // const edge_color = (<THREE.LineDashedMaterial>(<THREE.LineSegments> intersect0.object).material).color;
+                    // if (edge_color['r'] === 1 && edge_color['b'] === 1 && edge_color['g'] === 1) {
+                    //     edge = scene.white_edge_select_map.get(intersect0.index / 2);
+                    // } else {
+                    //     edge = scene.edge_select_map.get(intersect0.index / 2);
+                    // }
+                    const edge = scene.edge_select_map.get(intersect0.index / 2);
                     const ent_id = `_e_v${edge}`;
                     if (scene.selected_vertex.has(ent_id)) {
                         this.unselectGeom(ent_id, EEntTypeStr[EEntType.VERT]);
@@ -990,14 +992,14 @@ export class ThreejsViewerComponent implements OnInit, DoCheck, OnChanges, OnDes
                 break;
             case EEntType.EDGE:
                 if (intersect0.object.type === 'LineSegments') {
-                    let edge;
-                    const edge_color = (<THREE.LineDashedMaterial>(<THREE.LineSegments> intersect0.object).material).color;
-                    if (edge_color['r'] === 1 && edge_color['b'] === 1 && edge_color['g'] === 1) {
-                        edge = scene.white_edge_select_map.get(intersect0.index / 2);
-                    } else {
-                        edge = scene.edge_select_map.get(intersect0.index / 2);
-                    }
-                    // const edge = scene.edge_select_map.get(intersect0.index / 2);
+                    // let edge;
+                    // const edge_color = (<THREE.LineDashedMaterial>(<THREE.LineSegments> intersect0.object).material).color;
+                    // if (edge_color['r'] === 1 && edge_color['b'] === 1 && edge_color['g'] === 1) {
+                    //     edge = scene.white_edge_select_map.get(intersect0.index / 2);
+                    // } else {
+                    //     edge = scene.edge_select_map.get(intersect0.index / 2);
+                    // }
+                    const edge = scene.edge_select_map.get(intersect0.index / 2);
                     const ent_id = `${EEntTypeStr[EEntType.EDGE]}${edge}`;
                     if (scene.selected_geoms.has(ent_id)) {
                         this.unselectGeom(ent_id, EEntTypeStr[EEntType.EDGE], true);
@@ -1026,13 +1028,14 @@ export class ThreejsViewerComponent implements OnInit, DoCheck, OnChanges, OnDes
                 break;
             case EEntType.WIRE:
                 if (intersect0.object.type === 'LineSegments') {
-                    let edge;
-                    const edge_color = (<THREE.LineDashedMaterial>(<THREE.LineSegments> intersect0.object).material).color;
-                    if (edge_color['r'] === 1 && edge_color['b'] === 1 && edge_color['g'] === 1) {
-                        edge = scene.white_edge_select_map.get(intersect0.index / 2);
-                    } else {
-                        edge = scene.edge_select_map.get(intersect0.index / 2);
-                    }
+                    // let edge;
+                    // const edge_color = (<THREE.LineDashedMaterial>(<THREE.LineSegments> intersect0.object).material).color;
+                    // if (edge_color['r'] === 1 && edge_color['b'] === 1 && edge_color['g'] === 1) {
+                    //     edge = scene.white_edge_select_map.get(intersect0.index / 2);
+                    // } else {
+                    //     edge = scene.edge_select_map.get(intersect0.index / 2);
+                    // }
+                    const edge = scene.edge_select_map.get(intersect0.index / 2);
                     const wire = this.model.modeldata.geom.nav.navEdgeToWire(edge);
                     // const edge = scene.edge_select_map.get(intersect0.index / 2)
                     // const edge = scene.edges_select_idx_to_i[intersect0.index / 2],
@@ -1064,14 +1067,14 @@ export class ThreejsViewerComponent implements OnInit, DoCheck, OnChanges, OnDes
                 break;
             case EEntType.PLINE:
                 if (intersect0.object.type === 'LineSegments') {
-                    let edge;
-                    const edge_color = (<THREE.LineDashedMaterial>(<THREE.LineSegments> intersect0.object).material).color;
-                    if (edge_color['r'] === 1 && edge_color['b'] === 1 && edge_color['g'] === 1) {
-                        edge = scene.white_edge_select_map.get(intersect0.index / 2);
-                    } else {
-                        edge = scene.edge_select_map.get(intersect0.index / 2);
-                    }
-                    // const edge = scene.edge_select_map.get(intersect0.index / 2);
+                    // let edge;
+                    // const edge_color = (<THREE.LineDashedMaterial>(<THREE.LineSegments> intersect0.object).material).color;
+                    // if (edge_color['r'] === 1 && edge_color['b'] === 1 && edge_color['g'] === 1) {
+                    //     edge = scene.white_edge_select_map.get(intersect0.index / 2);
+                    // } else {
+                    //     edge = scene.edge_select_map.get(intersect0.index / 2);
+                    // }
+                    const edge = scene.edge_select_map.get(intersect0.index / 2);
                     const wire = this.model.modeldata.geom.nav.navEdgeToWire(edge);
                     const pline = this.model.modeldata.geom.nav.navWireToPline(wire);
                     // const edge = scene.edges_select_idx_to_i[intersect0.index / 2];
@@ -1276,7 +1279,7 @@ export class ThreejsViewerComponent implements OnInit, DoCheck, OnChanges, OnDes
             this.dataService.selected_ents.get(ent_type_str).delete(ent_id);
             this.unselectLabel(ent_id, ent_type_str);
         }
-        this.refreshTable(event);
+        this.refreshTable();
     }
 
     private unselectLabel(ent_id, ent_type_str) {
@@ -1538,13 +1541,14 @@ export class ThreejsViewerComponent implements OnInit, DoCheck, OnChanges, OnDes
             const tri = this._data_threejs.tri_select_map.get(object.faceIndex);
             colls = this.model.modeldata.geom.nav.navAnyToColl(EEntType.TRI, tri);
         } else if (type === 'LineSegments') {
-            let edge;
-            const edge_color = (<THREE.LineDashedMaterial>(<THREE.LineSegments> object.object).material).color;
-            if (edge_color['r'] === 1 && edge_color['b'] === 1 && edge_color['g'] === 1) {
-                edge = this._data_threejs.white_edge_select_map.get(object.index / 2);
-            } else {
-                edge = this._data_threejs.edge_select_map.get(object.index / 2);
-            }
+            // let edge;
+            // const edge_color = (<THREE.LineDashedMaterial>(<THREE.LineSegments> object.object).material).color;
+            // if (edge_color['r'] === 1 && edge_color['b'] === 1 && edge_color['g'] === 1) {
+            //     edge = this._data_threejs.white_edge_select_map.get(object.index / 2);
+            // } else {
+            //     edge = this._data_threejs.edge_select_map.get(object.index / 2);
+            // }
+            const edge = this._data_threejs.edge_select_map.get(object.index / 2);
             colls = this.model.modeldata.geom.nav.navAnyToColl(EEntType.EDGE, edge);
         } else if (type === 'Points') {
             const vert = this.model.modeldata.geom.nav.navPosiToVert(object.index);
@@ -1618,7 +1622,7 @@ export class ThreejsViewerComponent implements OnInit, DoCheck, OnChanges, OnDes
 
         this.dataService.selected_ents.get(EEntTypeStr[EEntType.COLL]).set(coll_id, id);
         this.dataService.selected_coll.set(coll_id, children);
-        // this.refreshTable(null);
+        // this.refreshTable();
     }
 
     private chooseVertex(id: number) {
@@ -1632,7 +1636,7 @@ export class ThreejsViewerComponent implements OnInit, DoCheck, OnChanges, OnDes
         scene.selectObjvertex(`_single_v${timestamp}`, ent_id, position, this.container, labelText);
         posi_ent.set(ent_id, id);
         this.dataService.selected_vertex.set(`_single_v${timestamp}`, [ent_id]);
-        this.refreshTable(null);
+        this.refreshTable();
     }
 
     public zoomfit() {

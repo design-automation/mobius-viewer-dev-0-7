@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { DataService } from '@services';
 import { ISettings } from './data.threejsSettings';
 import { DataThreejsBase } from './data.threejsBase';
 
@@ -15,8 +16,8 @@ export class DataThreejsSelect extends DataThreejsBase {
     /**
      * Constructor
      */
-    constructor(settings: ISettings) {
-        super(settings);
+    constructor(settings: ISettings, dataService: DataService) {
+        super(settings, dataService);
     }
     /**
      *
