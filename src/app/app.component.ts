@@ -1,5 +1,5 @@
 import { Component, Injector, Input,
-    ViewChild, ViewContainerRef, ComponentFactoryResolver, OnDestroy, OnInit, DoCheck } from '@angular/core';
+    ViewChild, ViewContainerRef, ComponentFactoryResolver, OnDestroy, OnInit, DoCheck, HostListener } from '@angular/core';
 import { MatIconRegistry } from '@angular/material';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
@@ -138,6 +138,27 @@ export class AppComponent implements DoCheck, OnInit, OnDestroy {
              fileReader.readAsText(f.file, 'json/applications');
         } catch (ex) {
             return;
+        }
+    }
+
+    @HostListener('window:message', ['$event'])
+    onWindowMessage(event: MessageEvent) {
+        if (!event.data.messageType) {
+            return;
+        }
+        switch (event.data.messageType) {
+            case 'update':
+                if (!event.data.url) { return; }
+                fetch(event.data.url).then(
+                    res => {
+                    if (!res.ok) { return; }
+                    res.text().then(giText => {
+                        const newModel = _parameterTypes.newFn();
+                        newModel.setJSONStr(giText);
+                        this.data = newModel;
+                    });
+                });
+                break;
         }
     }
 }
