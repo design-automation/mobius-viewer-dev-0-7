@@ -148,16 +148,22 @@ export class AppComponent implements DoCheck, OnInit, OnDestroy {
         }
         switch (event.data.messageType) {
             case 'update':
-                if (!event.data.url) { return; }
-                fetch(event.data.url).then(
-                    res => {
-                    if (!res.ok) { return; }
-                    res.text().then(giText => {
-                        const newModel = _parameterTypes.newFn();
-                        newModel.setJSONStr(giText);
-                        this.data = newModel;
+                if (!event.data.url && !event.data.model) { return; }
+                if (event.data.url) {
+                    fetch(event.data.url).then(
+                        res => {
+                        if (!res.ok) { return; }
+                        res.text().then(giText => {
+                            const newModel = _parameterTypes.newFn();
+                            newModel.setJSONStr(giText);
+                            this.data = newModel;
+                        });
                     });
-                });
+                } else {
+                    const newModel = _parameterTypes.newFn();
+                    newModel.setJSONStr(event.data.model);
+                    this.data = newModel;
+                }
                 break;
         }
     }
