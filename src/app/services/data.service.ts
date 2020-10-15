@@ -28,7 +28,7 @@ export class DataService {
     private static _splitVal = 60;
     private static _flowchartSplitUpdate = false;
 
-    private static _attribVal = 34;
+    private static _attribVal = 0;
     private static _attribSplitUpdate = false;
 
     private static _consoleScroll: number;

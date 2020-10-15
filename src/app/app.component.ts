@@ -1,5 +1,5 @@
 import { Component, Injector, Input,
-    ViewChild, ViewContainerRef, ComponentFactoryResolver, OnDestroy, OnInit, DoCheck, HostListener } from '@angular/core';
+    ViewChild, ViewContainerRef, ComponentFactoryResolver, OnDestroy, OnInit, DoCheck, HostListener, AfterViewInit } from '@angular/core';
 import { MatIconRegistry } from '@angular/material';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
@@ -15,7 +15,7 @@ import { IView } from './view.interface';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent implements DoCheck, OnInit, OnDestroy {
+export class AppComponent implements DoCheck, OnInit, OnDestroy, AfterViewInit {
     files: FileHandle[] = [];
 
     @ViewChild('vc', { read: ViewContainerRef, static: true }) vc: ViewContainerRef;
@@ -76,6 +76,17 @@ export class AppComponent implements DoCheck, OnInit, OnDestroy {
             this.dataService.toggleViewHelp(false);
             this.updateView(view);
         } else { this.updateValue(); }
+    }
+    ngAfterViewInit() {
+        setTimeout(() => {
+            const container = document.getElementById('dummy_container');
+            if (container.childElementCount === 0) {
+                const publishElement = document.createElement('div');
+                publishElement.setAttribute('id', 'published');
+                container.appendChild(publishElement);
+                this.dataService.attribVal = 0;
+            }
+        }, 0);
     }
     /**
      * createView
@@ -157,14 +168,28 @@ export class AppComponent implements DoCheck, OnInit, OnDestroy {
                             const newModel = _parameterTypes.newFn();
                             newModel.setJSONStr(giText);
                             this.data = newModel;
+                            document.getElementById('zoomingfit').click();
                         });
                     });
                 } else {
                     const newModel = _parameterTypes.newFn();
                     newModel.setJSONStr(event.data.model);
                     this.data = newModel;
+                    document.getElementById('zoomingfit').click();
                 }
                 break;
+        }
+        const container = document.getElementById('dummy_container');
+        if (!event.data.showAttrTable) {
+            if (container.childElementCount === 0) {
+                const publishElement = document.createElement('div');
+                publishElement.setAttribute('id', 'published');
+                container.appendChild(publishElement);
+                this.dataService.attribVal = 0;
+            }
+        } else if (container.childElementCount > 0) {
+            container.removeChild(container.firstElementChild);
+            this.dataService.attribVal = 34;
         }
     }
 }

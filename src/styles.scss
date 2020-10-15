@@ -45,6 +45,19 @@ as-split-area{
     border-right: 1px solid $color4;
 }
 
+as-split {
+    &.as-disabled{
+        #three-js{
+            flex: 0 0 calc(100% - 0px) !important;
+        }
+        .as-split-gutter {
+            flex-basis: unset !important;
+            height: 1px !important;
+            border: unset;
+        }
+    }
+}
+
 #gi-viewer-container{
     .as-split-gutter{
         border-top: 1px solid $color4 !important;
