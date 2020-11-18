@@ -175,6 +175,13 @@ export class AppComponent implements DoCheck, OnInit, OnDestroy, AfterViewInit {
                     newModel.setJSONStr(event.data.model);
                     this.data = newModel;
                 }
+                if (event.data.keepSettings || event.data.keepCamera) {
+                } else {
+                    setTimeout(() => {
+                        const zoomfit = document.getElementById('zoomingfit');
+                        if (zoomfit) { zoomfit.click(); }
+                    }, 0);
+                }
                 break;
         }
         const container = document.getElementById('dummy_container');
