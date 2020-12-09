@@ -13,7 +13,7 @@ import { DataService } from '@services';
 import { DragDirective } from './directives/dragDropDirective';
 import { MatIconModule } from '@angular/material/icon';
 import { VIEWER_ARR, VIEWER_MOD } from './model-viewers.config';
-import { DataCesiumService } from './gi-cesium-viewer/data/data.cesium.service';
+// import { DataCesiumService } from './gi-cesium-viewer/data/data.cesium.service';
 
 @NgModule({
   declarations: [
@@ -30,7 +30,7 @@ import { DataCesiumService } from './gi-cesium-viewer/data/data.cesium.service';
   entryComponents: [
     ...VIEWER_ARR
   ],
-  providers: [ GIDataService, DataService, DataCesiumService ],
+  providers: [ GIDataService, DataService ],
   bootstrap: [ AppComponent ]
 })
 export class AppModule { }

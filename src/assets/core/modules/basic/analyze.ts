@@ -11,7 +11,7 @@ import { checkArgs, ArgCh } from '../_check_args';
 
 import { GIModel } from '@libs/geo-info/GIModel';
 import { TId, Txyz, EEntType, TEntTypeIdx, TRay, TPlane, Txy, EAttribDataTypeStrs } from '@libs/geo-info/common';
-import { getArrDepth, idsMakeFromIndicies, idsMake, idsBreak } from '@libs/geo-info/id';
+import { getArrDepth, idsMakeFromIdxs, idsMake, idsBreak, idMake } from '@assets/libs/geo-info/common_id_funcs';
 import { distance } from '@libs/geom/distance';
 import { vecAdd, vecCross, vecMult, vecNorm, vecAng2, vecSetLen, vecRot } from '@libs/geom/vectors';
 import uscore from 'underscore';
@@ -25,7 +25,7 @@ import * as THREE from 'three';
 import { TypedArrayUtils } from '@libs/TypedArrayUtils.js';
 import * as Mathjs from 'mathjs';
 import { createSingleMeshTjs } from '@assets/libs/geom/mesh';
-import { isRay, isXYZ, isPlane } from '@assets/libs/geo-info/virtual';
+import { isRay, isXYZ, isPlane } from '@assets/libs/geo-info/common_func';
 
 // ================================================================================================
 interface TRaytraceResult {
@@ -104,7 +104,7 @@ export function Raytrace(__model__: GIModel, rays: TRay|TRay[]|TRay[][],
         checkArgs(fn_name, 'rays', rays, [ArgCh.isRay, ArgCh.isRayL, ArgCh.isRayLL]);
         ents_arrs = checkIDs(__model__, fn_name, 'entities', entities,
             [ID.isID, ID.isIDL],
-            [EEntType.FACE, EEntType.PGON, EEntType.COLL]) as TEntTypeIdx[];
+            [EEntType.PGON, EEntType.COLL]) as TEntTypeIdx[];
         checkArgs(fn_name, 'dist', dist, [ArgCh.isNum, ArgCh.isNumL]);
         if (Array.isArray(dist)) {
             if (dist.length !== 2) { throw new Error('If "dist" is a list, it must have a length of two: [min_dist, max_dist].'); }
@@ -185,7 +185,7 @@ function _raytrace(origins_tjs: THREE.Vector3[], dirs_tjs: THREE.Vector3[], mesh
             hit_count += 1;
             if (method === _ERaytraceMethod.ALL || method === _ERaytraceMethod.HIT_PGONS) {
                 const face_i = mesh[1][isects[0].faceIndex];
-                result_ents.push( idsMake([EEntType.PGON, face_i]) as TId );
+                result_ents.push( idMake(EEntType.PGON, face_i) as TId );
             }
             if (method === _ERaytraceMethod.ALL || method === _ERaytraceMethod.INTERSECTIONS) {
                 const isect_tjs: THREE.Vector3 = isects[0].point;
@@ -268,7 +268,7 @@ export function Isovist(__model__: GIModel, origins: TRay[]|TPlane[],
         checkArgs(fn_name, 'origins', origins, [ArgCh.isRayL, ArgCh.isPlnL]);
         ents_arrs = checkIDs(__model__, fn_name, 'entities', entities,
             [ID.isIDL],
-            [EEntType.FACE, EEntType.PGON, EEntType.COLL]) as TEntTypeIdx[];
+            [EEntType.PGON, EEntType.COLL]) as TEntTypeIdx[];
         checkArgs(fn_name, 'dist', radius, [ArgCh.isNum, ArgCh.isNumL]);
         if (Array.isArray(radius)) {
             if (radius.length !== 2) { throw new Error('If "dist" is a list, it must have a length of two: [min_dist, max_dist].'); }
@@ -463,13 +463,13 @@ export function Sky(__model__: GIModel, origins: Txyz[]|TRay[]|TPlane[], detail:
         }
         ents_arrs = checkIDs(__model__, fn_name, 'entities', entities,
             [ID.isID, ID.isIDL],
-            [EEntType.FACE, EEntType.PGON, EEntType.COLL]) as TEntTypeIdx[];
+            [EEntType.PGON, EEntType.COLL]) as TEntTypeIdx[];
     } else {
         ents_arrs = idsBreak(entities) as TEntTypeIdx[];
-        // const geolocation = __model__.modeldata.attribs.query.getModelAttribVal('geolocation');
+        // const geolocation = __model__.modeldata.attribs.get.getModelAttribVal('geolocation');
         // latitude = geolocation['latitude'];
         // if (__model__.modeldata.attribs.query.hasModelAttrib('north')) {
-        //     north = __model__.modeldata.attribs.query.getModelAttribVal('north') as Txy;
+        //     north = __model__.modeldata.attribs.get.getModelAttribVal('north') as Txy;
         // }
     }
     // TODO
@@ -502,7 +502,6 @@ function _skyRayDirsTjs(detail: number): THREE.Vector3[] {
             vecs.push(vec);
         }
     }
-    //console.log("num rays = ", vecs.length);
     return vecs;
 }
 // ================================================================================================
@@ -605,12 +604,12 @@ export function Sun(__model__: GIModel, origins: Txyz[]|TRay[]|TPlane[], detail:
         }
         ents_arrs = checkIDs(__model__, fn_name, 'entities', entities,
             [ID.isID, ID.isIDL],
-            [EEntType.FACE, EEntType.PGON, EEntType.COLL]) as TEntTypeIdx[];
+            [EEntType.PGON, EEntType.COLL]) as TEntTypeIdx[];
         if (!__model__.modeldata.attribs.query.hasModelAttrib('geolocation')) {
             throw new Error('analyze.Solar: model attribute "geolocation" is missing, \
                 e.g. @geolocation = {"latitude":12, "longitude":34}');
         } else {
-            const geolocation = __model__.modeldata.attribs.query.getModelAttribVal('geolocation');
+            const geolocation = __model__.modeldata.attribs.get.getModelAttribVal('geolocation');
             if (uscore.isObject(geolocation) && uscore.has(geolocation, 'latitude')) {
                 latitude = geolocation['latitude'];
             } else {
@@ -619,7 +618,7 @@ export function Sun(__model__: GIModel, origins: Txyz[]|TRay[]|TPlane[], detail:
             }
         }
         if (__model__.modeldata.attribs.query.hasModelAttrib('north')) {
-            north = __model__.modeldata.attribs.query.getModelAttribVal('north') as Txy;
+            north = __model__.modeldata.attribs.get.getModelAttribVal('north') as Txy;
             if (!Array.isArray(north) || north.length !== 2) {
                 throw new Error('analyze.Solar: model has a "north" attribute with the wrong type, \
                 it should be a vector with two values, \
@@ -628,10 +627,10 @@ export function Sun(__model__: GIModel, origins: Txyz[]|TRay[]|TPlane[], detail:
         }
     } else {
         ents_arrs = idsBreak(entities) as TEntTypeIdx[];
-        const geolocation = __model__.modeldata.attribs.query.getModelAttribVal('geolocation');
+        const geolocation = __model__.modeldata.attribs.get.getModelAttribVal('geolocation');
         latitude = geolocation['latitude'];
         if (__model__.modeldata.attribs.query.hasModelAttrib('north')) {
-            north = __model__.modeldata.attribs.query.getModelAttribVal('north') as Txy;
+            north = __model__.modeldata.attribs.get.getModelAttribVal('north') as Txy;
         }
     }
     // TODO
@@ -885,7 +884,7 @@ export function SkyDome(__model__: GIModel, origin: Txyz|TRay|TPlane, detail: nu
                 throw new Error('analyze.Solar: model attribute "geolocation" is missing, \
                     e.g. @geolocation = {"latitude":12, "longitude":34}');
             } else {
-                const geolocation = __model__.modeldata.attribs.query.getModelAttribVal('geolocation');
+                const geolocation = __model__.modeldata.attribs.get.getModelAttribVal('geolocation');
                 if (uscore.isObject(geolocation) && uscore.has(geolocation, 'latitude')) {
                     latitude = geolocation['latitude'];
                 } else {
@@ -894,7 +893,7 @@ export function SkyDome(__model__: GIModel, origin: Txyz|TRay|TPlane, detail: nu
                 }
             }
             if (__model__.modeldata.attribs.query.hasModelAttrib('north')) {
-                north = __model__.modeldata.attribs.query.getModelAttribVal('north') as Txy;
+                north = __model__.modeldata.attribs.get.getModelAttribVal('north') as Txy;
                 if (!Array.isArray(north) || north.length !== 2) {
                     throw new Error('analyze.Solar: model has a "north" attribute with the wrong type, \
                     it should be a vector with two values, \
@@ -903,10 +902,10 @@ export function SkyDome(__model__: GIModel, origin: Txyz|TRay|TPlane, detail: nu
             }
         }
     } else {
-        const geolocation = __model__.modeldata.attribs.query.getModelAttribVal('geolocation');
+        const geolocation = __model__.modeldata.attribs.get.getModelAttribVal('geolocation');
         latitude = geolocation['latitude'];
         if (__model__.modeldata.attribs.query.hasModelAttrib('north')) {
-            north = __model__.modeldata.attribs.query.getModelAttribVal('north') as Txy;
+            north = __model__.modeldata.attribs.get.getModelAttribVal('north') as Txy;
         }
     }
     // --- Error Check ---
@@ -954,10 +953,10 @@ function _sunPathGenPosis(__model__: GIModel, rays_dirs_tjs: THREE.Vector3[],
         let xyz: Txyz = vecMult([direction_tjs.x, direction_tjs.y, direction_tjs.z], radius);
         xyz = multMatrix(xyz, matrix);
         const posi_i: number = __model__.modeldata.geom.add.addPosi();
-        __model__.modeldata.attribs.add.setPosiCoords(posi_i, xyz);
+        __model__.modeldata.attribs.posis.setPosiCoords(posi_i, xyz);
         posis_i.push(posi_i);
     }
-    return idsMakeFromIndicies(EEntType.POSI, posis_i) as TId[];
+    return idsMakeFromIdxs(EEntType.POSI, posis_i) as TId[];
 }
 // ================================================================================================
 /**
@@ -1018,8 +1017,8 @@ export function Nearest(__model__: GIModel,
         _nearest(__model__, source_posis_i, target_posis_i, radius, max_neighbors);
     // return dictionary with results
     return {
-        'posis': idsMakeFromIndicies(EEntType.POSI, result[0]) as TId[],
-        'neighbors': idsMakeFromIndicies(EEntType.POSI, result[1]) as TId[][]|TId[],
+        'posis': idsMakeFromIdxs(EEntType.POSI, result[0]) as TId[],
+        'neighbors': idsMakeFromIdxs(EEntType.POSI, result[1]) as TId[][]|TId[],
         'distances': result[2] as number[]|number[][]
     };
 }
@@ -1043,7 +1042,7 @@ function _nearest(__model__: GIModel, source_posis_i: number[], target_posis_i: 
     typed_buff.setAttribute( 'position', new THREE.BufferAttribute( typed_positions, 4 ) );
     for (let i = 0; i < posis_i.length; i++) {
         const posi_i: number = posis_i[i];
-        const xyz: Txyz = __model__.modeldata.attribs.query.getPosiCoords(posi_i);
+        const xyz: Txyz = __model__.modeldata.attribs.posis.getPosiCoords(posi_i);
         map_posi_i_to_xyz.set(posi_i, xyz);
         typed_positions[ i * 4 + 0 ] = xyz[0];
         typed_positions[ i * 4 + 1 ] = xyz[1];
@@ -1295,18 +1294,18 @@ export function ShortestPath(__model__: GIModel, source: TId|TId[]|TId[][][], ta
     }
     const dict: TShortestPathResult = {};
     if (return_dists) {
-        dict.source_posis = idsMakeFromIndicies(EEntType.POSI, source_posis_i) as TId[];
+        dict.source_posis = idsMakeFromIdxs(EEntType.POSI, source_posis_i) as TId[];
         dict.distances = source_posis_i.length === 1 ? all_path_dists[0] : all_path_dists;
     }
     if (return_counts) {
-        dict.edges = idsMakeFromIndicies(EEntType.EDGE, Array.from(map_edges_i.keys())) as TId[];
+        dict.edges = idsMakeFromIdxs(EEntType.EDGE, Array.from(map_edges_i.keys())) as TId[];
         dict.edges_count = Array.from(map_edges_i.values());
-        dict.posis =  idsMakeFromIndicies(EEntType.POSI, Array.from(map_posis_i.keys())) as TId[];
+        dict.posis =  idsMakeFromIdxs(EEntType.POSI, Array.from(map_posis_i.keys())) as TId[];
         dict.posis_count =  Array.from(map_posis_i.values());
     }
     if (return_paths) {
-        dict.edge_paths =  idsMakeFromIndicies(EEntType.EDGE, edge_paths) as TId[][];
-        dict.posi_paths =  idsMakeFromIndicies(EEntType.POSI, posi_paths) as TId[][];
+        dict.edge_paths =  idsMakeFromIdxs(EEntType.EDGE, edge_paths) as TId[][];
+        dict.posi_paths =  idsMakeFromIdxs(EEntType.POSI, posi_paths) as TId[][];
     }
     return dict;
 }
@@ -1333,7 +1332,7 @@ function _cytoscapeWeightFn2(edge: cytoscape.EdgeSingular) {
 function _cytoscapeGetElements(__model__: GIModel, ents_arr: TEntTypeIdx[],
         source_posis_i: number[], target_posis_i: number[], directed: boolean): any[] {
     let has_weight_attrib = false;
-    if (__model__.modeldata.attribs.query.hasAttrib(EEntType.EDGE, 'weight')) {
+    if (__model__.modeldata.attribs.query.hasEntAttrib(EEntType.EDGE, 'weight')) {
         has_weight_attrib = __model__.modeldata.attribs.query.getAttribDataType(EEntType.EDGE, 'weight') === EAttribDataTypeStrs.NUMBER;
     }
     // edges, starts empty
@@ -1363,10 +1362,10 @@ function _cytoscapeGetElements(__model__: GIModel, ents_arr: TEntTypeIdx[],
             const edge_posis_i: number[] = __model__.modeldata.geom.nav.navAnyToPosi(EEntType.EDGE, edge_i);
             let weight = 1.0;
             if (has_weight_attrib) {
-                weight = __model__.modeldata.attribs.query.getAttribVal(EEntType.EDGE, 'weight', edge_i) as number;
+                weight = __model__.modeldata.attribs.get.getEntAttribVal(EEntType.EDGE, edge_i, 'weight') as number;
             } else {
-                const c0: Txyz = __model__.modeldata.attribs.query.getPosiCoords(edge_posis_i[0]);
-                const c1: Txyz = __model__.modeldata.attribs.query.getPosiCoords(edge_posis_i[1]);
+                const c0: Txyz = __model__.modeldata.attribs.posis.getPosiCoords(edge_posis_i[0]);
+                const c1: Txyz = __model__.modeldata.attribs.posis.getPosiCoords(edge_posis_i[1]);
                 weight = distance(c0, c1);
             }
             elements.push( {  data: { id: 'e' + edge_i,
@@ -1386,10 +1385,10 @@ function _cytoscapeGetElements(__model__: GIModel, ents_arr: TEntTypeIdx[],
             } else {
                 let weight = 1.0;
                 if (has_weight_attrib) {
-                    weight = __model__.modeldata.attribs.query.getAttribVal(EEntType.EDGE, 'weight', edge_i) as number;
+                    weight = __model__.modeldata.attribs.get.getEntAttribVal(EEntType.EDGE, edge_i, 'weight') as number;
                 } else {
-                    const c0: Txyz = __model__.modeldata.attribs.query.getPosiCoords(edge_posis_i[0]);
-                    const c1: Txyz = __model__.modeldata.attribs.query.getPosiCoords(edge_posis_i[1]);
+                    const c0: Txyz = __model__.modeldata.attribs.posis.getPosiCoords(edge_posis_i[0]);
+                    const c1: Txyz = __model__.modeldata.attribs.posis.getPosiCoords(edge_posis_i[1]);
                     weight = distance(c0, c1);
                 }
                 const obj = {
@@ -1613,18 +1612,18 @@ export function ClosestPath(__model__: GIModel, source: TId|TId[]|TId[][][], tar
     }
     const dict: TClosestPathResult = {};
     if (return_dists) {
-        dict.source_posis = idsMakeFromIndicies(EEntType.POSI, source_posis_i) as TId[];
+        dict.source_posis = idsMakeFromIdxs(EEntType.POSI, source_posis_i) as TId[];
         dict.distances = path_dists;
     }
     if (return_counts) {
-        dict.edges = idsMakeFromIndicies(EEntType.EDGE, Array.from(map_edges_i.keys())) as TId[];
+        dict.edges = idsMakeFromIdxs(EEntType.EDGE, Array.from(map_edges_i.keys())) as TId[];
         dict.edges_count = Array.from(map_edges_i.values());
-        dict.posis =  idsMakeFromIndicies(EEntType.POSI, Array.from(map_posis_i.keys())) as TId[];
+        dict.posis =  idsMakeFromIdxs(EEntType.POSI, Array.from(map_posis_i.keys())) as TId[];
         dict.posis_count =  Array.from(map_posis_i.values());
     }
     if (return_paths) {
-        dict.edge_paths =  idsMakeFromIndicies(EEntType.EDGE, edge_paths) as TId[][];
-        dict.posi_paths =  idsMakeFromIndicies(EEntType.POSI, posi_paths) as TId[][];
+        dict.edge_paths =  idsMakeFromIdxs(EEntType.EDGE, edge_paths) as TId[][];
+        dict.posi_paths =  idsMakeFromIdxs(EEntType.POSI, posi_paths) as TId[][];
     }
     return dict;
 }
@@ -1636,7 +1635,7 @@ export enum _ECentralityMethod {
 function _cyGetPosisAndElements(__model__: GIModel, ents_arr: TEntTypeIdx[],
     posis_i: number[], directed: boolean): [cytoscape.ElementDefinition[], number[]] {
     let has_weight_attrib = false;
-    if (__model__.modeldata.attribs.query.hasAttrib(EEntType.EDGE, 'weight')) {
+    if (__model__.modeldata.attribs.query.hasEntAttrib(EEntType.EDGE, 'weight')) {
         has_weight_attrib = __model__.modeldata.attribs.query.getAttribDataType(EEntType.EDGE, 'weight') === EAttribDataTypeStrs.NUMBER;
     }
     // edges, starts empty
@@ -1667,10 +1666,10 @@ function _cyGetPosisAndElements(__model__: GIModel, ents_arr: TEntTypeIdx[],
             const edge_posis_i: number[] = __model__.modeldata.geom.nav.navAnyToPosi(EEntType.EDGE, edge_i);
             let weight = 1.0;
             if (has_weight_attrib) {
-                weight = __model__.modeldata.attribs.query.getAttribVal(EEntType.EDGE, 'weight', edge_i) as number;
+                weight = __model__.modeldata.attribs.get.getEntAttribVal(EEntType.EDGE, edge_i, 'weight') as number;
             } else {
-                // const c0: Txyz = __model__.modeldata.attribs.query.getPosiCoords(edge_posis_i[0]);
-                // const c1: Txyz = __model__.modeldata.attribs.query.getPosiCoords(edge_posis_i[1]);
+                // const c0: Txyz = __model__.modeldata.attribs.posis.getPosiCoords(edge_posis_i[0]);
+                // const c1: Txyz = __model__.modeldata.attribs.posis.getPosiCoords(edge_posis_i[1]);
                 weight = 1; // distance(c0, c1);
             }
             elements.push( {  data: { id: 'e' + edge_i,
@@ -1690,10 +1689,10 @@ function _cyGetPosisAndElements(__model__: GIModel, ents_arr: TEntTypeIdx[],
             } else {
                 let weight = 1.0;
                 if (has_weight_attrib) {
-                    weight = __model__.modeldata.attribs.query.getAttribVal(EEntType.EDGE, 'weight', edge_i) as number;
+                    weight = __model__.modeldata.attribs.get.getEntAttribVal(EEntType.EDGE, edge_i, 'weight') as number;
                 } else {
-                    // const c0: Txyz = __model__.modeldata.attribs.query.getPosiCoords(edge_posis_i[0]);
-                    // const c1: Txyz = __model__.modeldata.attribs.query.getPosiCoords(edge_posis_i[1]);
+                    // const c0: Txyz = __model__.modeldata.attribs.posis.getPosiCoords(edge_posis_i[0]);
+                    // const c1: Txyz = __model__.modeldata.attribs.posis.getPosiCoords(edge_posis_i[1]);
                     weight = 1; // distance(c0, c1);
                 }
                 const obj = {
@@ -1818,7 +1817,7 @@ function _centralityDegreeDirected(posis_i: number[], cy_network: any, alpha: nu
         outdegree.push( cy_centrality.outdegree(source_elem) );
     }
     return {
-        'posis': idsMakeFromIndicies(EEntType.POSI, posis_i),
+        'posis': idsMakeFromIdxs(EEntType.POSI, posis_i),
         'indegree': indegree,
         'outdegree': outdegree
     };
@@ -1835,7 +1834,7 @@ function _centralityDegreeUndirected(posis_i: number[], cy_network: any, alpha: 
         degree.push( cy_centrality.degree(source_elem) );
     }
     return {
-        'posis': idsMakeFromIndicies(EEntType.POSI, posis_i),
+        'posis': idsMakeFromIdxs(EEntType.POSI, posis_i),
         'degree': degree
     };
 }
@@ -1972,7 +1971,7 @@ function _centralityCloseness(posis_i: number[], cy_network: cytoscape.Core,  di
         comps.push(comp);
     }
     return {
-        'posis': idsMakeFromIndicies(EEntType.POSI, result_posis_i),
+        'posis': idsMakeFromIdxs(EEntType.POSI, result_posis_i),
         'centrality': results
     };
 }
@@ -1994,7 +1993,7 @@ function _centralityHarmonic(posis_i: number[], cy_network: cytoscape.Core,  dir
         results.push( result );
     }
     return {
-        'posis': idsMakeFromIndicies(EEntType.POSI, posis_i),
+        'posis': idsMakeFromIdxs(EEntType.POSI, posis_i),
         'centrality': results
     };
 }
@@ -2013,7 +2012,7 @@ function _centralityBetweenness(posis_i: number[], cy_network: cytoscape.Core, d
         results.push( result );
     }
     return {
-        'posis': idsMakeFromIndicies(EEntType.POSI, posis_i),
+        'posis': idsMakeFromIdxs(EEntType.POSI, posis_i),
         'centrality': results
     };
 }

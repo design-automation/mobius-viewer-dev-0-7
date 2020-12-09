@@ -33,7 +33,7 @@ export class AppComponent implements DoCheck, OnInit, OnDestroy, AfterViewInit {
         this.matIconRegistry.addSvgIcon('cControlCam', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/ControlCam.svg'));
         this.matIconRegistry.addSvgIcon('cVisibility', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/visibility.svg'));
         this.matIconRegistry.addSvgIcon('c3D Viewer', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/3D2.svg'));
-        this.matIconRegistry.addSvgIcon('cGeo Viewer', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/Geo.svg'));
+        this.matIconRegistry.addSvgIcon('cThree Geo Viewer', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/Geo.svg'));
     }
     /**
      * ngOnInit
@@ -166,13 +166,13 @@ export class AppComponent implements DoCheck, OnInit, OnDestroy, AfterViewInit {
                         if (!res.ok) { return; }
                         res.text().then(giText => {
                             const newModel = _parameterTypes.newFn();
-                            newModel.setJSONStr(giText);
+                            newModel.importGI(giText);
                             this.data = newModel;
                         });
                     });
                 } else {
                     const newModel = _parameterTypes.newFn();
-                    newModel.setJSONStr(event.data.model);
+                    newModel.importGI(event.data.model);
                     this.data = newModel;
                 }
                 if (event.data.keepSettings || event.data.keepCamera) {

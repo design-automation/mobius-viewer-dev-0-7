@@ -9,8 +9,8 @@ import { checkIDs, ID } from '../_check_ids';
 import { checkArgs, ArgCh } from '../_check_args';
 
 import { GIModel } from '@libs/geo-info/GIModel';
-import { TId, EEntType, TEntTypeIdx, EFilterOperatorTypes } from '@libs/geo-info/common';
-import { isPoint, isPline, isPgon, isColl, idsMake, getArrDepth, isEmptyArr, idsBreak } from '@libs/geo-info/id';
+import { TId, EEntType, TEntTypeIdx, EFilterOperatorTypes, EAttribNames } from '@libs/geo-info/common';
+import { idsMake, getArrDepth, isEmptyArr, idsBreak, idMake, idsMakeFromIdxs } from '@assets/libs/geo-info/common_id_funcs';
 // import { __merge__} from '../_model';
 // import { _model } from '..';
 import { arrMakeFlat } from '@libs/util/arrs';
@@ -62,16 +62,17 @@ export function Create(__model__: GIModel, entities: TId|TId[]|TId[][], name: st
                     ': The list of collection names must be equal in length to the list of collections that get created.');
             }
             for (let i = 0; i < name.length; i++) {
-                __model__.modeldata.attribs.add.setEntAttribVal(EEntType.COLL, colls_i[i], 'name', name[i]);
+                __model__.modeldata.attribs.set.setEntAttribVal(EEntType.COLL, colls_i[i], EAttribNames.COLL_NAME, name[i]);
             }
         } else {
-            __model__.modeldata.attribs.add.setEntAttribVal(EEntType.COLL, colls_i, 'name', name);
+            __model__.modeldata.attribs.set.setEntsAttribVal(EEntType.COLL, colls_i, EAttribNames.COLL_NAME, name);
         }
     }
     // return the collection id
     return idsMake(new_ent_arrs) as TId|TId[];
 }
 function _create(__model__: GIModel, ents_arr: TEntTypeIdx | TEntTypeIdx[] | TEntTypeIdx[][]): TEntTypeIdx | TEntTypeIdx[] {
+    const ssid: number = __model__.modeldata.active_ssid;
     const depth: number = getArrDepth(ents_arr);
     if (depth === 1) {
         ents_arr = [ents_arr] as TEntTypeIdx[];
@@ -84,17 +85,17 @@ function _create(__model__: GIModel, ents_arr: TEntTypeIdx | TEntTypeIdx[] | TEn
     const pgons_i: number[] = [];
     const child_colls_i: number[] = [];
     for (const ent_arr of ents_arr) {
-        if (isPoint(ent_arr[0])) { points_i.push(ent_arr[1]); }
-        if (isPline(ent_arr[0])) { plines_i.push(ent_arr[1]); }
-        if (isPgon(ent_arr[0])) { pgons_i.push(ent_arr[1]); }
-        if (isColl(ent_arr[0])) { child_colls_i.push(ent_arr[1]); }
+        if (ent_arr[0] === EEntType.POSI) { points_i.push(ent_arr[1]); }
+        if (ent_arr[0] === EEntType.PLINE) { plines_i.push(ent_arr[1]); }
+        if (ent_arr[0] === EEntType.PGON) { pgons_i.push(ent_arr[1]); }
+        if (ent_arr[0] === EEntType.COLL) { child_colls_i.push(ent_arr[1]); }
     }
     // create the collection, setting tha parent to -1
-    const coll_i: number = __model__.modeldata.geom.add.addColl(-1, points_i, plines_i, pgons_i);
-    // set the parents
-    for (const child_coll_i of child_colls_i) {
-        __model__.modeldata.geom.modify_coll.setCollParent(child_coll_i, coll_i);
-    }
+    const coll_i: number = __model__.modeldata.geom.add.addColl();
+    __model__.modeldata.geom.snapshot.addCollPoints(ssid, coll_i, points_i);
+    __model__.modeldata.geom.snapshot.addCollPlines(ssid, coll_i, plines_i);
+    __model__.modeldata.geom.snapshot.addCollPgons(ssid, coll_i, pgons_i);
+    __model__.modeldata.geom.snapshot.addCollChildren(ssid, coll_i, child_colls_i);
     // return the new collection
     return [EEntType.COLL, coll_i];
 }
@@ -126,17 +127,20 @@ export function Get(__model__: GIModel, names: string|string[]): TId|TId[] {
     if (colls_i.length === 0) {
         return []; // return an empty list
     } else if (colls_i.length === 1) {
-        return idsMake([EEntType.COLL, colls_i[0]]) as TId;
+        return idMake(EEntType.COLL, colls_i[0]) as TId;
     }
-    return idsMake(colls_i.map(coll_i => [EEntType.COLL, coll_i]) as TEntTypeIdx[]) as TId[];
+    return idsMakeFromIdxs(EEntType.COLL, colls_i) as TId[];
+    // return idsMake(colls_i.map(coll_i => [EEntType.COLL, coll_i]) as TEntTypeIdx[]) as TId[];
 }
 function _get(__model__: GIModel, names: string|string[]): number[] {
     if (!Array.isArray(names)) {
         // wildcards
         if (names.indexOf('*') !== -1 || names.indexOf('?') !== -1) {
             const reg_exp = new RegExp(names.replace('?', '\\w').replace('*', '\\w*'));
-            const all_colls_i: number[] = __model__.modeldata.geom.query.getEnts(EEntType.COLL);
-            const all_names: string[] = __model__.modeldata.attribs.query.getAttribVal(EEntType.COLL, 'name', all_colls_i) as string[];
+            const all_colls_i: number[] = __model__.modeldata.geom.snapshot.getEnts(__model__.modeldata.active_ssid, EEntType.COLL);
+            const all_names: string[] = all_colls_i.map( coll_i =>
+                __model__.modeldata.attribs.get.getEntAttribVal(EEntType.COLL, coll_i, EAttribNames.COLL_NAME) as string
+            );
             const unique_names: string[] = Array.from(new Set(all_names));
             const match_names: string[] = [];
             for (const name1 of unique_names) {
@@ -144,9 +148,9 @@ function _get(__model__: GIModel, names: string|string[]): number[] {
             }
             return _get(__model__, match_names);
         }
-        const colls_i: number[] = __model__.modeldata.geom.query.getEnts(EEntType.COLL);
+        const colls_i: number[] = __model__.modeldata.geom.snapshot.getEnts(__model__.modeldata.active_ssid, EEntType.COLL);
         const query_result: number[] = __model__.modeldata.attribs.query.filterByAttribs(
-            EEntType.COLL, colls_i, 'name', null, EFilterOperatorTypes.IS_EQUAL, names);
+            EEntType.COLL, colls_i, EAttribNames.COLL_NAME, null, EFilterOperatorTypes.IS_EQUAL, names);
         return query_result;
     } else {
         const all_colls_i: number[] = [];
@@ -193,9 +197,11 @@ export function Add(__model__: GIModel, coll: TId, entities: TId|TId[]): void {
 }
 
 function _collectionAdd(__model__: GIModel, coll_i: number, ents_arr: TEntTypeIdx[]): void {
+    const ssid: number = __model__.modeldata.active_ssid;
     const points_i: number[] = [];
     const plines_i: number[] = [];
     const pgons_i: number[] = [];
+    const colls_i: number[] = [];
     for (const [ent_type, ent_i] of ents_arr) {
         switch (ent_type) {
             case EEntType.POINT:
@@ -208,14 +214,17 @@ function _collectionAdd(__model__: GIModel, coll_i: number, ents_arr: TEntTypeId
                 pgons_i.push(ent_i);
                 break;
             case EEntType.COLL:
-                __model__.modeldata.geom.modify_coll.setCollParent(ent_i, coll_i);
+                colls_i.push(ent_i);
                 break;
             default:
                 throw new Error('Error adding entities to a collection. \
                 A collection can only contain points, polylines, polygons, and other collections.');
         }
     }
-    __model__.modeldata.geom.modify_coll.collAddEnts(coll_i, points_i, plines_i, pgons_i);
+    __model__.modeldata.geom.snapshot.addCollPoints(ssid, coll_i, points_i);
+    __model__.modeldata.geom.snapshot.addCollPlines(ssid, coll_i, plines_i);
+    __model__.modeldata.geom.snapshot.addCollPgons(ssid, coll_i, pgons_i);
+    __model__.modeldata.geom.snapshot.addCollChildren(ssid, coll_i, colls_i);
 }
 // ================================================================================================
 /**
@@ -258,9 +267,11 @@ export function Remove(__model__: GIModel, coll: TId, entities: TId|TId[]): void
     }
 }
 function _collectionRemove(__model__: GIModel, coll_i: number, ents_arr: TEntTypeIdx[]): void {
+    const ssid: number = __model__.modeldata.active_ssid;
     const points_i: number[] = [];
     const plines_i: number[] = [];
     const pgons_i: number[] = [];
+    const colls_i: number[] = [];
     for (const [ent_type, ent_i] of ents_arr) {
         switch (ent_type) {
             case EEntType.POINT:
@@ -273,27 +284,28 @@ function _collectionRemove(__model__: GIModel, coll_i: number, ents_arr: TEntTyp
                 pgons_i.push(ent_i);
                 break;
             case EEntType.COLL:
-                if (__model__.modeldata.geom.query.getCollParent(ent_i) === coll_i) {
-                    __model__.modeldata.geom.modify_coll.setCollParent(ent_i, -1);
-                }
+                colls_i.push(ent_i);
                 break;
             default:
                 throw new Error('Error removing entities from a collection. \
                 A collection can only contain points, polylines, polygons, and other collections.');
         }
     }
-    __model__.modeldata.geom.modify_coll.collRemoveEnts(coll_i, points_i, plines_i, pgons_i);
+    __model__.modeldata.geom.snapshot.remCollPoints(ssid, coll_i, points_i);
+    __model__.modeldata.geom.snapshot.remCollPlines(ssid, coll_i, plines_i);
+    __model__.modeldata.geom.snapshot.remCollPgons(ssid, coll_i, pgons_i);
+    __model__.modeldata.geom.snapshot.remCollChildren(ssid, coll_i, colls_i);
 }
 function _collectionEmpty(__model__: GIModel, coll_i: number): void {
+    const ssid: number = this.modeldata.active_ssid;
     const points_i: number[] = __model__.modeldata.geom.nav.navCollToPoint(coll_i);
     const plines_i: number[] = __model__.modeldata.geom.nav.navCollToPline(coll_i);
     const pgons_i: number[] = __model__.modeldata.geom.nav.navCollToPgon(coll_i);
-    __model__.modeldata.geom.modify_coll.collRemoveEnts(coll_i, points_i, plines_i, pgons_i);
-    // remove the collections that are children of this collection
-    const child_colls_i: number[] = __model__.modeldata.geom.query.getCollChildren(coll_i);
-    for (const child_coll_i of child_colls_i) {
-        __model__.modeldata.geom.modify_coll.setCollParent(child_coll_i, -1);
-    }
+    const colls_i: number[] = __model__.modeldata.geom.nav.navCollToCollChildren(coll_i);
+    __model__.modeldata.geom.snapshot.remCollPoints(ssid, coll_i, points_i);
+    __model__.modeldata.geom.snapshot.remCollPlines(ssid, coll_i, plines_i);
+    __model__.modeldata.geom.snapshot.remCollPgons(ssid, coll_i, pgons_i);
+    __model__.modeldata.geom.snapshot.remCollChildren(ssid, coll_i, colls_i);
 }
 // ================================================================================================
 /**
@@ -319,7 +331,7 @@ export function Delete(__model__: GIModel, coll: TId|TId[]): void {
     for (const [ent_type, ent_i] of colls_arrs) {
         colls_i.push(ent_i);
     }
-    __model__.modeldata.geom.del.delColls(colls_i);
+    __model__.modeldata.geom.snapshot.delColls(__model__.modeldata.active_ssid, colls_i);
 }
 // ================================================================================================
 

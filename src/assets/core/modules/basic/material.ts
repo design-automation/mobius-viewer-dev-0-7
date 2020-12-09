@@ -14,7 +14,7 @@ import { GIModel } from '@libs/geo-info/GIModel';
 import { Txyz, EAttribNames, EAttribDataTypeStrs } from '@libs/geo-info/common';
 import * as THREE from 'three';
 import { TId, EEntType, TEntTypeIdx } from '@libs/geo-info/common';
-import { isEmptyArr, idsBreak } from '@libs/geo-info/id';
+import { isEmptyArr, idsBreak } from '@assets/libs/geo-info/common_id_funcs';
 import { arrMakeFlat } from '@assets/libs/util/arrs';
 
 // ================================================================================================
@@ -78,7 +78,7 @@ function _setMaterialModelAttrib(__model__: GIModel, name: string, settings_obj:
     // if the material already exists, then existing settings will be added
     // but new settings will take precedence
     if (__model__.modeldata.attribs.query.hasModelAttrib(name)) {
-        const exist_settings_obj: object = __model__.modeldata.attribs.query.getModelAttribVal(name) as object;
+        const exist_settings_obj: object = __model__.modeldata.attribs.get.getModelAttribVal(name) as object;
         // check that the existing material is a Basic one
         if (exist_settings_obj['type'] !== _EMeshMaterialType.BASIC) {
             if (settings_obj['type'] !== exist_settings_obj['type']) {
@@ -95,7 +95,7 @@ function _setMaterialModelAttrib(__model__: GIModel, name: string, settings_obj:
         __model__.modeldata.attribs.add.addAttrib(EEntType.MOD, name, EAttribDataTypeStrs.DICT);
     }
     // const settings_str: string = JSON.stringify(settings_obj);
-    __model__.modeldata.attribs.add.setModelAttribVal(name, settings_obj);
+    __model__.modeldata.attribs.set.setModelAttribVal(name, settings_obj);
 }
 // ================================================================================================
 /**
@@ -125,9 +125,9 @@ export function Set(__model__: GIModel, entities: TId|TId[], material: string|st
         let is_list = false;
         if (Array.isArray(material)) {
             is_list = true;
-            material_dict = __model__.modeldata.attribs.query.getModelAttribVal(material[0] as string) as object;
+            material_dict = __model__.modeldata.attribs.get.getModelAttribVal(material[0] as string) as object;
         } else {
-            material_dict = __model__.modeldata.attribs.query.getModelAttribVal(material as string) as object;
+            material_dict = __model__.modeldata.attribs.get.getModelAttribVal(material as string) as object;
         }
         if (!material_dict) {
             throw new Error('Material does not exist: ' + material);
@@ -154,26 +154,26 @@ export function Set(__model__: GIModel, entities: TId|TId[], material: string|st
     }
 }
 function _lineMaterial(__model__: GIModel, ents_arr: TEntTypeIdx[], material: string): void {
-    if (!__model__.modeldata.attribs.query.hasAttrib(EEntType.PLINE, EAttribNames.MATERIAL)) {
+    if (!__model__.modeldata.attribs.query.hasEntAttrib(EEntType.PLINE, EAttribNames.MATERIAL)) {
         __model__.modeldata.attribs.add.addAttrib(EEntType.PLINE, EAttribNames.MATERIAL, EAttribDataTypeStrs.STRING);
     }
     for (const ent_arr of ents_arr) {
         const [ent_type, ent_i]: [number, number] = ent_arr as TEntTypeIdx;
         const plines_i: number[] = __model__.modeldata.geom.nav.navAnyToPline(ent_type, ent_i);
         for (const pline_i of plines_i) {
-            __model__.modeldata.attribs.add.setEntAttribVal(EEntType.PLINE, pline_i, EAttribNames.MATERIAL, material);
+            __model__.modeldata.attribs.set.setEntAttribVal(EEntType.PLINE, pline_i, EAttribNames.MATERIAL, material);
         }
     }
 }
 function _meshMaterial(__model__: GIModel, ents_arr: TEntTypeIdx[], material: string[]): void {
-    if (!__model__.modeldata.attribs.query.hasAttrib(EEntType.PGON, EAttribNames.MATERIAL)) {
+    if (!__model__.modeldata.attribs.query.hasEntAttrib(EEntType.PGON, EAttribNames.MATERIAL)) {
         __model__.modeldata.attribs.add.addAttrib(EEntType.PGON, EAttribNames.MATERIAL, EAttribDataTypeStrs.LIST);
     }
     for (const ent_arr of ents_arr) {
         const [ent_type, ent_i]: [number, number] = ent_arr as TEntTypeIdx;
         const pgons_i: number[] = __model__.modeldata.geom.nav.navAnyToPgon(ent_type, ent_i);
         for (const pgon_i of pgons_i) {
-            __model__.modeldata.attribs.add.setEntAttribVal(EEntType.PGON, pgon_i, EAttribNames.MATERIAL, material);
+            __model__.modeldata.attribs.set.setEntAttribVal(EEntType.PGON, pgon_i, EAttribNames.MATERIAL, material);
         }
     }
 }

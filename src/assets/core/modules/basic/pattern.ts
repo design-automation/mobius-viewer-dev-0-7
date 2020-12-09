@@ -10,7 +10,7 @@
 import { checkArgs, ArgCh } from '../_check_args';
 
 import { Txyz, TPlane, XYPLANE, TId, EEntType } from '@libs/geo-info/common';
-import { getArrDepth, idsMakeFromIndicies } from '@libs/geo-info/id';
+import { getArrDepth, idsMakeFromIdxs } from '@assets/libs/geo-info/common_id_funcs';
 import { vecAdd } from '@libs/geom/vectors';
 import { xfromSourceTargetMatrix, multMatrix } from '@libs/geom/matrix';
 import { Matrix4 } from 'three';
@@ -58,11 +58,11 @@ export function Line(__model__: GIModel, origin: Txyz|TPlane, size: number, num_
             xyz = vecAdd(xyz, origin as Txyz);
         }
         const posi_i: number = __model__.modeldata.geom.add.addPosi();
-        __model__.modeldata.attribs.add.setPosiCoords(posi_i, xyz);
+        __model__.modeldata.attribs.posis.setPosiCoords(posi_i, xyz);
         posis_i.push(posi_i);
     }
     // return
-    return idsMakeFromIndicies(EEntType.POSI, posis_i) as TId[];
+    return idsMakeFromIdxs(EEntType.POSI, posis_i) as TId[];
 }
 // ================================================================================================
 /**
@@ -107,11 +107,11 @@ export function Rectangle(__model__: GIModel, origin: Txyz|TPlane, size: number|
             xyz = vecAdd(xyz, origin as Txyz);
         }
         const posi_i: number = __model__.modeldata.geom.add.addPosi();
-        __model__.modeldata.attribs.add.setPosiCoords(posi_i, xyz);
+        __model__.modeldata.attribs.posis.setPosiCoords(posi_i, xyz);
         posis_i.push(posi_i);
     }
     // return
-    return idsMakeFromIndicies(EEntType.POSI, posis_i) as TId[];
+    return idsMakeFromIdxs(EEntType.POSI, posis_i) as TId[];
 }
 // ================================================================================================
 export enum _EGridMethod {
@@ -170,14 +170,14 @@ export function Grid(__model__: GIModel, origin: Txyz|TPlane, size: number|[numb
                 xyz = vecAdd(xyz, origin as Txyz);
             }
             const posi_i: number = __model__.modeldata.geom.add.addPosi();
-            __model__.modeldata.attribs.add.setPosiCoords(posi_i, xyz);
+            __model__.modeldata.attribs.posis.setPosiCoords(posi_i, xyz);
             posis_i.push(posi_i);
         }
     }
     // structure the grid of posis, and return
     const posis_i2: number[][] = [];
     if (method === _EGridMethod.FLAT) {
-        return idsMakeFromIndicies(EEntType.POSI, posis_i) as TId[];
+        return idsMakeFromIdxs(EEntType.POSI, posis_i) as TId[];
     } else if (method === _EGridMethod.ROWS) {
         for (let i = 0; i < xy_num_positions[1]; i++) {
             const row: number[] = [];
@@ -210,7 +210,7 @@ export function Grid(__model__: GIModel, origin: Txyz|TPlane, size: number|[numb
             }
         }
     }
-    return idsMakeFromIndicies(EEntType.POSI, posis_i2) as TId[][];
+    return idsMakeFromIdxs(EEntType.POSI, posis_i2) as TId[][];
 }
 // ================================================================================================
 export enum _EBoxMethod {
@@ -288,7 +288,7 @@ export function Box(__model__: GIModel, origin: Txyz | TPlane,
                         xyz = vecAdd(xyz, origin as Txyz);
                     }
                     const posi_i: number = __model__.modeldata.geom.add.addPosi();
-                    __model__.modeldata.attribs.add.setPosiCoords(posi_i, xyz);
+                    __model__.modeldata.attribs.posis.setPosiCoords(posi_i, xyz);
                     if (create_perim_layer) {
                         if (i === 0) {
                             layer_perim_x0_posis_i.push(posi_i);
@@ -325,7 +325,7 @@ export function Box(__model__: GIModel, origin: Txyz | TPlane,
             );
         }
         const all_posis: number[] = arrMakeFlat([layer_bot_posis_i, layers_posis_i, layer_top_posis_i]);
-        return idsMakeFromIndicies(EEntType.POSI, all_posis) as TId[];
+        return idsMakeFromIdxs(EEntType.POSI, all_posis) as TId[];
     } else if (method === _EBoxMethod.ROWS) {
         // rows that are parallel to x axis
         const posis_i2: number[][] = [];
@@ -356,7 +356,7 @@ export function Box(__model__: GIModel, origin: Txyz | TPlane,
             }
             posis_i2.push(row);
         }
-        return idsMakeFromIndicies(EEntType.POSI, posis_i2) as TId[][];
+        return idsMakeFromIdxs(EEntType.POSI, posis_i2) as TId[][];
     } else if (method === _EBoxMethod.COLUMNS) {
         // columns that are parallel to the y axis
         // i is moving along x axis
@@ -392,7 +392,7 @@ export function Box(__model__: GIModel, origin: Txyz | TPlane,
             }
             posis_i2.push(col);
         }
-        return idsMakeFromIndicies(EEntType.POSI, posis_i2) as TId[][];
+        return idsMakeFromIdxs(EEntType.POSI, posis_i2) as TId[][];
     } else if (method === _EBoxMethod.LAYERS) {
         // layers that are parallel to the xy plane
         // i is moving along z axis
@@ -412,7 +412,7 @@ export function Box(__model__: GIModel, origin: Txyz | TPlane,
         }
         // top
         posis_i2.push(layer_top_posis_i);
-        return idsMakeFromIndicies(EEntType.POSI, posis_i2) as TId[][];
+        return idsMakeFromIdxs(EEntType.POSI, posis_i2) as TId[][];
     } else if (method === _EBoxMethod.QUADS) {
         const posis_i2: number[][] = [];
         // bottom
@@ -468,7 +468,7 @@ export function Box(__model__: GIModel, origin: Txyz | TPlane,
                 posis_i2.push(quad);
             }
         }
-        return idsMakeFromIndicies(EEntType.POSI, posis_i2) as TId[][];
+        return idsMakeFromIdxs(EEntType.POSI, posis_i2) as TId[][];
     }
     return [];
 }
@@ -507,7 +507,7 @@ export function Polyhedron(__model__: GIModel, origin: Txyz | TPlane, radius: nu
     }
     // make polyhedron posis
     const posis_i: number[]|number[][] = _polyhedron(__model__, matrix, radius, detail, method);
-    return idsMakeFromIndicies(EEntType.POSI, posis_i) as TId[][];
+    return idsMakeFromIdxs(EEntType.POSI, posis_i) as TId[][];
 }
 export enum _EPolyhedronMethod {
     FLAT_TETRA = 'flat_tetra',
@@ -548,7 +548,7 @@ export function _polyhedron(__model__: GIModel, matrix: Matrix4, radius: number,
     for (const vert_tjs of hedron_tjs.vertices) {
         const xyz: Txyz = multMatrix(vert_tjs.toArray() as Txyz, matrix);
         const posi_i: number = __model__.modeldata.geom.add.addPosi();
-        __model__.modeldata.attribs.add.setPosiCoords(posi_i, xyz);
+        __model__.modeldata.attribs.posis.setPosiCoords(posi_i, xyz);
         posis_i.push(posi_i);
     }
     // if the method is flat, then we are done, return the posis
@@ -619,11 +619,11 @@ export function Arc(__model__: GIModel, origin: Txyz|TPlane, radius: number, num
             xyz = vecAdd(xyz, origin as Txyz);
         }
         const posi_i: number = __model__.modeldata.geom.add.addPosi();
-        __model__.modeldata.attribs.add.setPosiCoords(posi_i, xyz);
+        __model__.modeldata.attribs.posis.setPosiCoords(posi_i, xyz);
         posis_i.push(posi_i);
     }
     // return the list of posis
-    return idsMakeFromIndicies(EEntType.POSI, posis_i) as TId[];
+    return idsMakeFromIdxs(EEntType.POSI, posis_i) as TId[];
 }
 // ================================================================================================
 /**
@@ -671,11 +671,11 @@ export function Bezier(__model__: GIModel, coords: Txyz[], num_positions: number
     const posis_i: number[] = [];
     for (let i = 0; i < num_positions; i++) {
         const posi_i: number = __model__.modeldata.geom.add.addPosi();
-        __model__.modeldata.attribs.add.setPosiCoords(posi_i, points_tjs[i].toArray() as Txyz);
+        __model__.modeldata.attribs.posis.setPosiCoords(posi_i, points_tjs[i].toArray() as Txyz);
         posis_i.push(posi_i);
     }
     // return the list of posis
-    return idsMakeFromIndicies(EEntType.POSI, posis_i) as TId[];
+    return idsMakeFromIdxs(EEntType.POSI, posis_i) as TId[];
 }
 // ================================================================================================
 export enum _EClose {
@@ -758,7 +758,7 @@ export function Nurbs(__model__: GIModel, coords: Txyz[], degree: number, close:
     // Invalid knot vector format! Should begin with degree + 1 repeats and end with degree + 1 repeats!
     const posis_i: number[] = nurbsToPosis(__model__, curve_verb, degree, closed, num_positions, coords[0]);
     // return the list of posis
-    return idsMakeFromIndicies(EEntType.POSI, posis_i) as TId[];
+    return idsMakeFromIdxs(EEntType.POSI, posis_i) as TId[];
 }
 // ================================================================================================
 /**
@@ -817,7 +817,7 @@ export function _Interpolate(__model__: GIModel, coords: Txyz[], degree: number,
     const curve_verb = new VERB.geom.NurbsCurve.byPoints( coords2, degree );
     // return the list of posis
     const posis_i: number[] = nurbsToPosis(__model__, curve_verb, degree, closed, num_positions, coords[0]);
-    return idsMakeFromIndicies(EEntType.POSI, posis_i) as TId[];
+    return idsMakeFromIdxs(EEntType.POSI, posis_i) as TId[];
 }
 function nurbsToPosis(__model__: GIModel, curve_verb: any, degree: number, closed: boolean,
         num_positions: number, start: Txyz, ): number[] {
@@ -845,7 +845,7 @@ function nurbsToPosis(__model__: GIModel, curve_verb: any, degree: number, close
         const xyz: Txyz  = curve_verb.point(u) as Txyz;
         // xyz[2] = i / 10;
         const posi_i: number = __model__.modeldata.geom.add.addPosi();
-        __model__.modeldata.attribs.add.setPosiCoords(posi_i, xyz);
+        __model__.modeldata.attribs.posis.setPosiCoords(posi_i, xyz);
         posis_i.push(posi_i);
         const dist =    Math.abs(start[0] - xyz[0]) +
                         Math.abs(start[1] - xyz[1]) +
@@ -916,11 +916,11 @@ export function Interpolate(__model__: GIModel, coords: Txyz[], type: _ECurveCat
     const posis_i: number[] = [];
     for (let i = 0; i < num_positions; i++) {
         const posi_i: number = __model__.modeldata.geom.add.addPosi();
-        __model__.modeldata.attribs.add.setPosiCoords(posi_i, points_tjs[i].toArray() as Txyz);
+        __model__.modeldata.attribs.posis.setPosiCoords(posi_i, points_tjs[i].toArray() as Txyz);
         posis_i.push(posi_i);
     }
     // return the list of posis
-    return idsMakeFromIndicies(EEntType.POSI, posis_i) as TId[];
+    return idsMakeFromIdxs(EEntType.POSI, posis_i) as TId[];
 }
 // Enums for CurveCatRom()
 export enum _ECurveCatRomType {
