@@ -4,6 +4,7 @@ import { MatIconRegistry } from '@angular/material';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { _parameterTypes } from '@assets/core/modules';
+import { Import, _EIODataFormat } from '@assets/core/modules/basic/io';
 import { FileHandle } from './directives/dragDropDirective';
 import { DataService as GIDataService } from './gi-viewer/data/data.service';
 import { Viewers } from './model-viewers.config';
@@ -129,6 +130,7 @@ export class AppComponent implements DoCheck, OnInit, OnDestroy, AfterViewInit {
                 // componentRef.instance['output'] = this.dataService.helpView[1];
             } else if (this.activeView.name !== 'Console') {
                 componentRef.instance['data'] = this.data;
+                componentRef.instance['nodeIndex'] = 1;
             // } else {
             //     componentRef.instance['scrollcheck'] = true;
             }
@@ -144,7 +146,9 @@ export class AppComponent implements DoCheck, OnInit, OnDestroy, AfterViewInit {
             const fileReader = new FileReader();
             fileReader.onload = (e) => {
                 this.data = _parameterTypes.newFn();
-                this.data.setJSONStr(fileReader.result);
+                this.data.nextSnapshot();
+                // Import(this.data, <string> fileReader.result, _EIODataFormat.GI);
+                this.data.importGI(fileReader.result);
             };
              fileReader.readAsText(f.file, 'json/applications');
         } catch (ex) {
@@ -166,12 +170,14 @@ export class AppComponent implements DoCheck, OnInit, OnDestroy, AfterViewInit {
                         if (!res.ok) { return; }
                         res.text().then(giText => {
                             const newModel = _parameterTypes.newFn();
+                            newModel.nextSnapshot();
                             newModel.importGI(giText);
                             this.data = newModel;
                         });
                     });
                 } else {
                     const newModel = _parameterTypes.newFn();
+                    newModel.nextSnapshot();
                     newModel.importGI(event.data.model);
                     this.data = newModel;
                 }
