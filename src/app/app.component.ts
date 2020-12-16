@@ -35,6 +35,9 @@ export class AppComponent implements DoCheck, OnInit, OnDestroy, AfterViewInit {
         this.matIconRegistry.addSvgIcon('cVisibility', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/visibility.svg'));
         this.matIconRegistry.addSvgIcon('c3D Viewer', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/3D2.svg'));
         this.matIconRegistry.addSvgIcon('cThree Geo Viewer', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/Geo.svg'));
+        const newModel = _parameterTypes.newFn();
+        newModel.nextSnapshot();
+        this.data = newModel;
     }
     /**
      * ngOnInit
@@ -189,6 +192,35 @@ export class AppComponent implements DoCheck, OnInit, OnDestroy, AfterViewInit {
                     }, 0);
                 }
                 break;
+            case 'update_settings':
+                if (event.data.GI_settings) {
+                    const oldSettings = JSON.parse(localStorage.getItem('mpm_settings'));
+                    let newSettings = event.data.GI_settings;
+                    if (typeof newSettings === 'string') {
+                        newSettings = JSON.parse(newSettings);
+                    }
+                    this.settingsCheck(newSettings, oldSettings)
+                    localStorage.setItem('mpm_settings', JSON.stringify(newSettings));
+                    this.dataService.viewerSettingsUpdated = true
+                }
+                if (event.data.Geo_settings) {
+                    const oldSettings = JSON.parse(localStorage.getItem('geo_settings'));
+                    let newSettings = event.data.Geo_settings;
+                    if (typeof newSettings === 'string') {
+                        newSettings = JSON.parse(newSettings);
+                    }
+                    this.settingsCheck(newSettings, oldSettings)
+                    localStorage.setItem('geo_settings', JSON.stringify(newSettings));
+                    this.dataService.viewerSettingsUpdated = true
+                }
+                const model = this.data;
+                const newModel = _parameterTypes.newFn();
+                newModel.nextSnapshot();
+                this.data = newModel;
+                setTimeout(() => {
+                    this.data = model;
+                }, 0);
+                break;
         }
         const container = document.getElementById('dummy_container');
         if (!event.data.showAttrTable) {
@@ -201,6 +233,16 @@ export class AppComponent implements DoCheck, OnInit, OnDestroy, AfterViewInit {
         } else if (container.childElementCount > 0) {
             container.removeChild(container.firstElementChild);
             this.dataService.attribVal = 34;
+        }
+    }
+
+    settingsCheck(obj1, obj2, checkChildren = true) {
+        for (const i in obj2) {
+            if (!obj1.hasOwnProperty(i)) {
+                obj1[i] = JSON.parse(JSON.stringify(obj2[i]));
+            } else if (checkChildren && obj1[i].constructor === {}.constructor && obj2[i].constructor === {}.constructor) {
+                this.settingsCheck(obj1[i], obj2[i], false);
+            }
         }
     }
 }
