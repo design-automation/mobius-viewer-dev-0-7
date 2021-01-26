@@ -1,4 +1,4 @@
-import { TEntTypeIdx, TId } from './common';
+import { IEntSets, TEntTypeIdx, TId } from './common';
 import { GIMetaData } from './GIMetaData';
 import { GIModelData } from './GIModelData';
 import { idsBreak } from './common_id_funcs';
@@ -61,9 +61,15 @@ export class GIModel {
      * @param ents The list of ents to add.
      */
     public addEntsToActiveSnapshot(from_ssid: number, ents: TEntTypeIdx[]) {
-        const ents2: TEntTypeIdx[] = this.modeldata.geom.snapshot.getSubEnts( from_ssid, ents );
-        this.modeldata.geom.snapshot.copyEntsToActiveSnapshot(from_ssid, ents2);
-        this.modeldata.attribs.snapshot.copyEntsToActiveSnapshot(from_ssid, ents2);
+        // geometry
+        const ents_sets: IEntSets = this.modeldata.geom.snapshot.getSubEntsSets(from_ssid, ents);
+        this.modeldata.geom.snapshot.copyEntsToActiveSnapshot(from_ssid,
+            this.modeldata.geom.snapshot.getSubEnts(ents_sets));
+        // attributes
+        // TODO needs to be optimized, we should iterate over the sets directly - it will be faster
+        this.modeldata.geom.snapshot.addTopoToSubEntsSets(ents_sets);
+        this.modeldata.attribs.snapshot.copyEntsToActiveSnapshot(from_ssid,
+            this.modeldata.geom.snapshot.getSubEnts(ents_sets));
     }
     /**
      * Gets a set of ents from a snapshot.
@@ -179,8 +185,8 @@ export class GIModel {
      * Import a GI model.
      * @param meta
      */
-    public importGI(model_json_data_str: string): void {
-        this.modeldata.importGI(JSON.parse(model_json_data_str));
+    public importGI(model_json_data_str: string): TEntTypeIdx[] {
+        return this.modeldata.importGI(JSON.parse(model_json_data_str));
     }
     /**
      * Export a GI model.
@@ -255,12 +261,16 @@ export class GIModel {
         return this.modeldata.check();
     }
     /**
-     * Compares this model and another model.
+     * Compares two models.
+     * Checks that every entity in this model also exists in the other model.
      * ~
-     * This is the answer model.
-     * The other model is the submitted model.
+     * Additional entitis in the other model will not affect the score.
+     * Attributes at the model level are ignored.
      * ~
-     * Both models will be modified in the process.
+     * For grading, this model is assumed to be the answer model, and the other model is assumed to be
+     * the model submitted by the student.
+     * ~
+     * Both models will be modified in the process of cpmparing.
      * ~
      * @param model The model to compare with.
      */

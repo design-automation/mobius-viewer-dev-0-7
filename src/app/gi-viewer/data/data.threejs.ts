@@ -67,13 +67,14 @@ export class DataThreejs extends DataThreejsLookAt {
     }
 
     public populateScene(model: GIModel, container): void {
-        if (this.dataService.viewerSettingsUpdated) {
-            this.settings = JSON.parse(localStorage.getItem('mpm_settings'));
-            this.perspCam.position.copy(this.settings.camera.pos);
-            this.perspControls.target.copy(this.settings.camera.target);
+        const cameraSettings = localStorage.getItem('gi_camera');
+        if (cameraSettings && JSON.parse(cameraSettings)) {
+            const cam = JSON.parse(cameraSettings);
+            this.perspCam.position.copy(cam.pos);
+            this.perspControls.target.copy(cam.target);
             this.perspCam.updateProjectionMatrix();
             this.perspControls.update();
-            this.dataService.viewerSettingsUpdated = false;
+            localStorage.setItem('gi_camera', 'null');
         }
         while (this.scene.children.length > 0) {
             DataThreejs.disposeObjectProperty(this.scene.children[0], 'geometry');
@@ -245,7 +246,7 @@ export class DataThreejs extends DataThreejsLookAt {
         }
     }
     // private _getNodeSelect(): void {
-    //     const select_node: any = this.model.modeldata.attribs.query.getModelAttribVal('select_node');
+    //     const select_node: any = this.model.modeldata.attribs.get.getModelAttribVal('select_node');
     //     this.timelineEnabled = null;
     //     if (!select_node || !select_node.nodes) { return; }
     //     this.timeline_groups = select_node.nodes;

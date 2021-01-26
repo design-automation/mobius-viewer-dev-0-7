@@ -258,7 +258,7 @@ export class ThreejsViewerComponent implements OnInit, DoCheck, OnChanges, OnDes
             if (this.selectSwitch !== undefined) {
                 let ent_type = this.tab_map[this.getCurrentTab()];
                 if (ent_type === undefined) {
-                    const curr_topo = localStorage.getItem('mpm_attrib_current_topo_obj')
+                    const curr_topo = localStorage.getItem('mpm_attrib_current_topo_obj');
                     if (curr_topo) {
                         ent_type = Number(curr_topo);
                     }
@@ -270,7 +270,7 @@ export class ThreejsViewerComponent implements OnInit, DoCheck, OnChanges, OnDes
             if (this.attribLabel !== undefined) {
                 let ent_type = this.tab_map[this.getCurrentTab()];
                 if (ent_type === undefined) {
-                    const curr_topo = localStorage.getItem('mpm_attrib_current_topo_obj')
+                    const curr_topo = localStorage.getItem('mpm_attrib_current_topo_obj');
                     if (curr_topo) {
                         ent_type = Number(curr_topo);
                     }
@@ -393,7 +393,7 @@ export class ThreejsViewerComponent implements OnInit, DoCheck, OnChanges, OnDes
                 element.innerHTML = String(index);
             }
         } else {
-            const ent_arr = this.model.modeldata.geom.query.getEnts(this.dataService.selectingEntityType.id);
+            const ent_arr = this.model.modeldata.geom.snapshot.getEnts(this.nodeIndex, this.dataService.selectingEntityType.id);
             for (let i = 0; i < allLabels.length; i++) {
                 const element = allLabels[i];
                 const val = Number(element.getAttribute('data-index'));
@@ -507,7 +507,6 @@ export class ThreejsViewerComponent implements OnInit, DoCheck, OnChanges, OnDes
                         const _ent = object[0];
                         const _id = object[1];
                         const objEntType = _ent.slice(0, 2);
-                        console.log(_ent, _id, objEntType)
                         switch (objEntType) {
                             case EEntTypeStr[EEntType.POSI]:
                                 this.selectPositions(_id, null, null, _ent);
@@ -598,7 +597,7 @@ export class ThreejsViewerComponent implements OnInit, DoCheck, OnChanges, OnDes
     public async updateModel(model: GIModel) {
         this._data_threejs = this.dataService.getThreejsScene();
         if (!model) {
-            console.warn('Model or Scene not defined.');
+            // console.warn('Model or Scene not defined.');
             this._no_model = true;
             return;
         } else {
@@ -616,7 +615,7 @@ export class ThreejsViewerComponent implements OnInit, DoCheck, OnChanges, OnDes
                 this._no_model = false;
 
                 // Show Flowchart Selected Entities
-                const selected = this.model.modeldata.geom.selected;
+                const selected = this.model.modeldata.geom.selected[this.nodeIndex];
                 this.dataService.clearAll();
                 if (selected !== undefined && selected.length) {
                     let selectingType;
