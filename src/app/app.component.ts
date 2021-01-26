@@ -36,7 +36,6 @@ export class AppComponent implements DoCheck, OnInit, OnDestroy, AfterViewInit {
         this.matIconRegistry.addSvgIcon('c3D Viewer', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/3D2.svg'));
         this.matIconRegistry.addSvgIcon('cThree Geo Viewer', this.domSanitizer.bypassSecurityTrustResourceUrl('assets/Icons/Geo.svg'));
         const newModel = _parameterTypes.newFn();
-        newModel.nextSnapshot();
         this.data = newModel;
     }
     /**
@@ -149,7 +148,6 @@ export class AppComponent implements DoCheck, OnInit, OnDestroy, AfterViewInit {
             const fileReader = new FileReader();
             fileReader.onload = (e) => {
                 this.data = _parameterTypes.newFn();
-                this.data.nextSnapshot();
                 // Import(this.data, <string> fileReader.result, _EIODataFormat.GI);
                 this.data.importGI(fileReader.result);
             };
@@ -173,14 +171,12 @@ export class AppComponent implements DoCheck, OnInit, OnDestroy, AfterViewInit {
                         if (!res.ok) { return; }
                         res.text().then(giText => {
                             const newModel = _parameterTypes.newFn();
-                            newModel.nextSnapshot();
                             newModel.importGI(giText);
                             this.data = newModel;
                         });
                     });
                 } else {
                     const newModel = _parameterTypes.newFn();
-                    newModel.nextSnapshot();
                     newModel.importGI(event.data.model);
                     this.data = newModel;
                 }
@@ -213,13 +209,12 @@ export class AppComponent implements DoCheck, OnInit, OnDestroy, AfterViewInit {
                     localStorage.setItem('geo_settings', JSON.stringify(newSettings));
                     this.dataService.viewerSettingsUpdated = true
                 }
-                const model = this.data;
-                const newModel = _parameterTypes.newFn();
-                newModel.nextSnapshot();
-                this.data = newModel;
-                setTimeout(() => {
-                    this.data = model;
-                }, 0);
+                // const model = this.data;
+                // const newModel = _parameterTypes.newFn();
+                // this.data = newModel;
+                // setTimeout(() => {
+                //     this.data = model;
+                // }, 0);
                 break;
         }
         const container = document.getElementById('dummy_container');
