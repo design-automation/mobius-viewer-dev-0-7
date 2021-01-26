@@ -1,6 +1,6 @@
 import { GIGeom } from './geom/GIGeom';
 import { GIAttribs } from './attribs/GIAttribs';
-import { IModelJSONData, EEntType, EAttribNames, TEntTypeIdx, IEntSets } from './common';
+import { IModelJSONData, EEntType, EAttribNames, TEntTypeIdx, IEntSets, IRenumMaps } from './common';
 import { GIModelComparator } from './GIModelComparator';
 import { GIModel } from './GIModel';
 import { GIModelThreejs } from './GIModelThreejs';
@@ -8,6 +8,7 @@ import { GIFuncsCommon } from './funcs/GIFuncsCommon';
 import { GIFuncsMake } from './funcs/GIFuncsMake';
 import { GIFuncsEdit } from './funcs/GIFuncsEdit';
 import { GIFuncsModify } from './funcs/GIFuncsModify';
+import { idMake } from './common_id_funcs';
 
 /**
  * Geo-info model class.
@@ -47,130 +48,56 @@ export class GIModelData {
      * Eexisting data in the model is not affected.
      * @param model_data The JSON data.
      */
-    public importGI (model_data: IModelJSONData): void {
-        // console.log("SET DATA");
-        const renum_maps: Map<number, Map<number, number>> = this.geom.imp_exp.importGI(model_data.geometry);
+    public importGI(model_data: IModelJSONData): TEntTypeIdx[] {
+        if (model_data.version !== '0.7') {
+            if (model_data.version === undefined) {
+                throw new Error(
+                    'Importing GI data from with incorrect version.' +
+                    'The data being imported was generated in an old version of Mobius Modeller.' +
+                    'GI data should be generated using Mobius Modeller version 0.7.'
+                );
+            }
+            throw new Error(
+                'Importing GI data from with incorrect version.' +
+                'The data being imported was generated in Mobius Modeller version ' + model_data.version + '.' +
+                'GI data should be generated using Mobius Modeller version 0.7.'
+            );
+        }
+        // get the renum maps for the imprted data
+        const renum_maps: IRenumMaps = this.geom.imp_exp.importGIRenum(model_data.geometry);
+        // import the data
+        this.geom.imp_exp.importGI(model_data.geometry, renum_maps);
         this.attribs.imp_exp.importGI(model_data.attributes, renum_maps);
+        // get the new ents to return
+        const ents: TEntTypeIdx[] = [];
+        renum_maps.points.forEach( (new_ent_i, _) => ents.push([EEntType.POINT, new_ent_i]) );
+        renum_maps.plines.forEach( (new_ent_i, _) => ents.push([EEntType.PLINE, new_ent_i]) );
+        renum_maps.pgons.forEach( (new_ent_i, _) => ents.push([EEntType.PGON, new_ent_i]) );
+        renum_maps.colls.forEach( (new_ent_i, _) => ents.push([EEntType.COLL, new_ent_i]) );
+        // return the new ents that have been imported
+        return ents;
     }
     /**
      * Exports the JSON data for this model.
      */
     public exportGI(ents: TEntTypeIdx[]): IModelJSONData {
+        // get the ents to export
         let ent_sets: IEntSets;
         if (ents === null) {
             ent_sets = this.geom.snapshot.getAllEntSets(this.active_ssid);
         } else {
-            ent_sets = this.geom.snapshot.getSubEntsSets( this.active_ssid, ents);
+            ent_sets = this.geom.snapshot.getSubEntsSets(this.active_ssid, ents);
         }
         this.geom.snapshot.addTopoToSubEntsSets(ent_sets);
-        // merge the two sets of posis
-        // if (ent_sets.obj_ps) {
-        //     for (const posi_i of ent_sets.obj_ps) { ent_sets.ps.add(posi_i); }
-        // }
-        // return the data
+        // get the renum maps
+        const renum_maps: IRenumMaps = this.geom.imp_exp.exportGIRenum(ent_sets);
         return {
-            geometry: this.geom.imp_exp.exportGI(ent_sets),
-            attributes: this.attribs.imp_exp.exportGI(ent_sets)
+            type: 'GIJson',
+            version: '0.7',
+            geometry: this.geom.imp_exp.exportGI(ent_sets, renum_maps),
+            attributes: this.attribs.imp_exp.exportGI(ent_sets, renum_maps)
         };
     }
-    // /**
-    //  * Copys the data from a second model into this model.
-    //  * The existing data in this model is not deleted.
-    //  * For the imported data, deleted entities are also merged.
-    //  * @param model_data The GI model.
-    //  */
-    // public merge(ssid: number, modeldata: GIModelData): void {
-    //     // const geom_maps: Map<number, number>[] = this.geom.io.merge(model.modeldata.geom._geom_maps);
-    //     // this.attribs.io.merge(model.modeldata.attribs.attribs_maps.get(ssid), geom_maps);
-    //     this.geom.merge.merge(ssid, modeldata.geom);
-    //     this.attribs.io.merge(ssid, modeldata.attribs.attribs_maps.get(ssid));
-    //     this.model.metadata = modeldata.model.metadata;
-    // }
-    // /**
-    //  * Copys the data from a second model into this model without conflict detection.
-    //  * Usually, this model is assumed to be empty.
-    //  * If ent_sets is null, then only model attribs are copied.
-    //  * @param model_data The GI model.
-    //  */
-    // public dumpEnts(ssid: number, modeldata: GIModelData, ent_sets: IEntSets): void {
-    //     if (ent_sets === null) {
-    //         this.attribs.io.dumpEnts(ssid, modeldata.attribs.attribs_maps.get(ssid), ent_sets);
-    //         return;
-    //     }
-    //     // add topo geom sets
-    //     ent_sets.verts_i = new Set();
-    //     ent_sets.tris_i = new Set();
-    //     ent_sets.edges_i = new Set();
-    //     ent_sets.wires_i = new Set();
-    //     ent_sets.faces_i = new Set();
-    //     // add the ent posis to the main posis list to keep
-    //     ent_sets.obj_posis_i.forEach( posi_i => ent_sets.posis_i.add(posi_i) );
-    //     // points
-    //     ent_sets.points_i.forEach( point_i => {
-    //         ent_sets.verts_i.add(modeldata.geom.nav.navPointToVert(point_i));
-    //     });
-    //     // plines
-    //     ent_sets.plines_i.forEach( pline_i => {
-    //         const wire_i: number = modeldata.geom.nav.navPlineToWire(pline_i);
-    //         ent_sets.wires_i.add(wire_i);
-    //         const edges_i: number[] = modeldata.geom.nav.navWireToEdge(wire_i);
-    //         edges_i.forEach(edge_i => ent_sets.edges_i.add(edge_i));
-    //         const verts_i: number[] = modeldata.geom.query.getWireVerts(wire_i);
-    //         verts_i.forEach(vert_i => ent_sets.verts_i.add(vert_i));
-    //     });
-    //     // pgons
-    //     ent_sets.pgons_i.forEach( pgon_i => {
-    //         const face_i: number = modeldata.geom.nav.navPgonToFace(pgon_i);
-    //         ent_sets.faces_i.add(face_i);
-    //         const tris_i: number[] = modeldata.geom.nav.navFaceToTri(face_i);
-    //         tris_i.forEach(tri_i => ent_sets.tris_i.add(tri_i));
-    //         const wires_i: number[] = modeldata.geom.nav.navFaceToWire(face_i);
-    //         wires_i.forEach(wire_i => ent_sets.wires_i.add(wire_i));
-    //         wires_i.forEach( wire_i => {
-    //             const edges_i: number[] = modeldata.geom.nav.navWireToEdge(wire_i);
-    //             edges_i.forEach(edge_i => ent_sets.edges_i.add(edge_i));
-    //             const verts_i: number[] = modeldata.geom.query.getWireVerts(wire_i);
-    //         verts_i.forEach(vert_i => ent_sets.verts_i.add(vert_i));
-    //         });
-    //     });
-    //     // dump the selected data into this model
-    //     // this model is assumed to be emprt
-    //     this.geom.dump.dumpEnts(ssid, modeldata.geom, ent_sets);
-    //     this.attribs.io.dumpEnts(ssid, modeldata.attribs.attribs_maps.get(ssid), ent_sets);
-    // }
-    // /**
-    //  * Returns a clone of this model.
-    //  * Entity IDs will not change.
-    //  */
-    // public clone(ssid: number): GIModelData {
-    //     const clone: GIModelData = new GIModelData(this.model);
-    //     clone.geom.dump.dump(ssid, this.geom._geom_maps);
-    //     clone.attribs.io.dump(ssid, this.attribs.attribs_maps.get(ssid));
-    //     // this.model.metadata = this.model.metadata;
-    //     // clone.dump(this);
-    //     return clone;
-    // }
-    // /**
-    //  * Renumber entities.
-    //  */
-    // public purge(ssid: number): GIModelData {
-    //     throw new Error('Not implemented.');
-    //     // const clone: GIModelData = new GIModelData(this.model);
-    //     // clone.append(ssid, this);
-    //     // return clone;
-    // }
-    // /**
-    //  * Copys the data from a second model into this model.
-    //  * The existing data in this model is not deleted.
-    //  * For the imported data, deleted entities are filtered out (i.e. not merged).
-    //  * @param model_data The GI model.
-    //  */
-    // public append(ssid: number, ssid2: number, modeldata: GIModelData): void {
-    //     // append the geometry
-    //     const renum_maps: Map<string, Map<number, number>> = this.geom.append.append(ssid, ssid2, modeldata);
-    //     // append the attributes
-    //     this.attribs.io.append(ssid, ssid2, modeldata, renum_maps);
-    // }
     /**
      * Check model for internal consistency
      */
@@ -178,7 +105,8 @@ export class GIModelData {
         return this.geom.check.check();
     }
     /**
-     * Compares this model and another model.
+     * Compares two models.
+     * Checks that every entity in this model also exists in the other model.
      * ~
      * This is the answer model.
      * The other model is the submitted model.
@@ -238,9 +166,18 @@ export class GIModelData {
             case EEntType.PLINE:
             case EEntType.PGON:
                 if (this.attribs.get.getEntAttribVal(ent_type, ent_i, EAttribNames.TIMESTAMP) !== ts) {
-                    const obj_ts = this.attribs.get.getEntAttribVal(ent_type, ent_i, EAttribNames.TIMESTAMP);
-                    // TODO improve this error message
-                    throw new Error('Bad edit...' + ent_type + ', ' + ent_i + ', ' + obj_ts + ', ' + ts);
+                    // const obj_ts = this.attribs.get.getEntAttribVal(ent_type, ent_i, EAttribNames.TIMESTAMP);
+                    throw new Error(
+                        'An object is being edited that was created in an upstream node. ' +
+                        'Objects are immutable outside the node in which they are created. ' +
+                        '<ul>' +
+                        '<li>The object being edited is: "' + idMake(ent_type, ent_i) + '".</li>' +
+                        '</ul>' +
+                        'Possible fixes:' +
+                        '<ul>' +
+                        '<li>In this node, before editing, clone the object using the using the make.Clone() function.</li>' +
+                        '</ul>'
+                    );
                 }
                 return;
             case EEntType.COLL:
@@ -274,7 +211,7 @@ export class GIModelData {
         }
     }
     /**
-     * Get the timestamp of a posi
+     * Get the timestamp of an entity.
      * @param posi_i
      */
     public getEntTs(ent_type: EEntType, ent_i: number): number {
@@ -282,7 +219,7 @@ export class GIModelData {
         return this.attribs.get.getEntAttribVal(ent_type, ent_i, EAttribNames.TIMESTAMP ) as number;
     }
     /**
-     *
+     * Get the ID (integer) of the next snapshot.
      */
     public nextSnapshot() {
         this._max_timestamp += 1;

@@ -8,15 +8,17 @@
 /**
  *
  */
-import { checkIDs, ID } from '../_check_ids';
+import { checkIDs, ID } from '../../_check_ids';
+
 import { checkAttribValue, checkAttribName,
-    checkAttribIdxKey, checkAttribNameIdxKey, splitAttribNameIdxKey } from '../_check_attribs';
+    checkAttribIdxKey, checkAttribNameIdxKey, splitAttribNameIdxKey } from '../../_check_attribs';
 
 import uscore from 'underscore';
 import { GIModel } from '@libs/geo-info/GIModel';
 import { TId, EEntType, TEntTypeIdx,
     EAttribPush, TAttribDataTypes, EEntTypeStr, EAttribDataTypeStrs } from '@libs/geo-info/common';
-import { getArrDepth, idsBreak } from '@assets/libs/geo-info/common_id_funcs';
+import { idsBreak } from '@assets/libs/geo-info/common_id_funcs';
+import { getArrDepth } from '@assets/libs/util/arrs';
 import * as lodash from 'lodash';
 // ================================================================================================
 
@@ -142,7 +144,7 @@ export function Set(__model__: GIModel, entities: TId|TId[]|TId[][],
         if (value === undefined) {
             throw new Error(fn_name + ': value is undefined');
         }
-        ents_arr = checkIDs(__model__, fn_name, 'entities', entities, [ID.isNull, ID.isID, ID.isIDL], null) as TEntTypeIdx|TEntTypeIdx[];
+        ents_arr = checkIDs(__model__, fn_name, 'entities', entities, [ID.isNull, ID.isID, ID.isIDL1], null) as TEntTypeIdx|TEntTypeIdx[];
         [attrib_name, attrib_idx_key] = checkAttribNameIdxKey(fn_name, attrib);
         checkAttribName(fn_name , attrib_name);
     } else {
@@ -170,10 +172,11 @@ function _setAttrib(__model__: GIModel, ents_arr: TEntTypeIdx|TEntTypeIdx[],
         ents_arr = [ents_arr] as TEntTypeIdx[];
     }
     ents_arr = ents_arr as TEntTypeIdx[];
-    // all ents get the same attribute value
     if (method === _ESet.MANY_VALUES) {
+        // all ents get different attribute value
         _setEachEntDifferentAttribValue(__model__, ents_arr, attrib_name, attrib_values as TAttribDataTypes[], idx_or_key);
     } else {
+        // all ents get the same attribute value
         _setEachEntSameAttribValue(__model__, ents_arr, attrib_name, attrib_values as TAttribDataTypes, idx_or_key);
     }
     return;
@@ -268,7 +271,7 @@ export function Get(__model__: GIModel, entities: TId|TId[]|TId[][],
     const fn_name = 'attrib.Get';
     if (__model__.debug) {
         if (entities !== null && entities !== undefined) {
-            ents_arr = checkIDs(__model__, fn_name, 'entities', entities, [ID.isID, ID.isIDL], null) as TEntTypeIdx|TEntTypeIdx[];
+            ents_arr = checkIDs(__model__, fn_name, 'entities', entities, [ID.isID, ID.isIDL1], null) as TEntTypeIdx|TEntTypeIdx[];
         }
         [attrib_name, attrib_idx_key] = checkAttribNameIdxKey(fn_name, attrib);
         checkAttribName(fn_name, attrib_name);
@@ -518,7 +521,7 @@ export function Push(__model__: GIModel, entities: TId|TId[],
 
     if (__model__.debug) {
         if (entities !== null && entities !== undefined) {
-            ents_arr = checkIDs(__model__, fn_name, 'entities', entities, [ID.isID, ID.isIDL], null) as TEntTypeIdx[];
+            ents_arr = checkIDs(__model__, fn_name, 'entities', entities, [ID.isID, ID.isIDL1], null) as TEntTypeIdx[];
         }
         [source_attrib_name, source_attrib_idx_key] = checkAttribNameIdxKey(fn_name, source_attrib);
         [target_attrib_name, target_attrib_idx_key] = checkAttribNameIdxKey(fn_name, target_attrib);
