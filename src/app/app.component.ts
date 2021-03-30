@@ -216,6 +216,22 @@ export class AppComponent implements DoCheck, OnInit, OnDestroy, AfterViewInit {
                 //     this.data = model;
                 // }, 0);
                 break;
+            case 'get_localstorage_list':
+                let fileList = JSON.parse(localStorage.getItem('mobius_backup_list'));
+                if (!fileList) {
+                    fileList = [];
+                }
+                window.parent.postMessage({
+                    messageType: 'localstorage_list',
+                    file_list: fileList
+                }, '*');
+                break;
+            case 'zoom_to_fit':
+                const giZoom = document.getElementById('zoomingfit');
+                if (giZoom) { giZoom.click(); }
+                const cesiumZoom = document.getElementById('cesium_zoom_fit');
+                if (cesiumZoom) { cesiumZoom.click(); }
+                break;
         }
         const container = document.getElementById('dummy_container');
         if (!event.data.showAttrTable) {
