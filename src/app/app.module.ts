@@ -13,12 +13,14 @@ import { DataService } from '@services';
 import { DragDirective } from './directives/dragDropDirective';
 import { MatIconModule } from '@angular/material/icon';
 import { VIEWER_ARR, VIEWER_MOD } from './model-viewers.config';
+import { SpinnerComponent } from './spinner/spinner.component';
 // import { DataCesiumService } from './gi-cesium-viewer/data/data.cesium.service';
 
 @NgModule({
   declarations: [
     AppComponent,
-    DragDirective
+    DragDirective,
+    SpinnerComponent
   ],
   imports: [
     HttpClientModule,
@@ -28,6 +30,7 @@ import { VIEWER_ARR, VIEWER_MOD } from './model-viewers.config';
     ...VIEWER_MOD,
   ],
   entryComponents: [
+    SpinnerComponent,
     ...VIEWER_ARR
   ],
   providers: [ GIDataService, DataService ],
