@@ -1,6 +1,8 @@
 # Embedding Mobius Viewer
 Creating a unique url for your Mobius GI models is easy.
-You may include an url to the GI model directly in the url link or inject the GI model into the iframe using [postMessage API](https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage)
+You may include an url to the GI model directly in the url link or inject the GI model into the iframe using [postMessage API.](https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage)
+
+For more resources on embedding Mobius: https://mobius.design-automation.net/pages/mobius_for_your_site.html
 
 ## Required
 The .gi file will need to be a public resource stored in one of the following services:
@@ -16,24 +18,28 @@ The .gi file will need to be a public resource stored in one of the following se
 ## Embed
 You may include the url in the `src` attribute of an iframe.
 For more information: [MDN Web Docs Iframe](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe)
+```
     <iframe 
         width='100%' 
         height='600px' 
         style='border: 1px solid black;' 
         src="">
     </iframe>
-
+```
 ## postMessage API
 * html
+```
     <iframe 
         width='100%' 
         height='600px' 
         style='border: 1px solid black;' 
         src="https://design-automation.github.io/mobius-viewer-dev-0-7/">
     </iframe>
+```
 
 * javascript
     * Update Model
+```
         document.getElementById("mobius-viewer").contentWindow.postMessage(
                 {
                     messageType: 'update',
@@ -41,8 +47,9 @@ For more information: [MDN Web Docs Iframe](https://developer.mozilla.org/en-US/
                 },
                 "*"
             )
-
+```
     * Update Settings
+```
         document.getElementById("mobius-viewer").contentWindow.postMessage(
                 {
                     messageType: 'update_settings',
@@ -50,13 +57,15 @@ For more information: [MDN Web Docs Iframe](https://developer.mozilla.org/en-US/
                     Geo_settings: {...}
                 }
             )
+```
 ### Using Mobius Javascript and postMessage API to update model
 1. import the mobius javascript file
-    * import `Model` from './path/to/mobiusscript.js'
+    * `import `Model` from './path/to/mobiusscript.js'`
 1. import mobius modules
-    * import * as Modules from './path/to/mobius/core/modules'
+    * `import * as Modules from './path/to/mobius/core/modules'`
 1. call the javascript function to generate model (promise), then inject the return result to iframe using `postMessage`
-    * Model(
+```
+Model(
         Modules,
         ...parameters
     ).then(
@@ -67,7 +76,7 @@ For more information: [MDN Web Docs Iframe](https://developer.mozilla.org/en-US/
                 model: result.model.getJSONStr()
             }, '*');
     })
-
+```
 ### GI Viewer Settings
 format: `Object`
 * `key` : `value type` (`Object` if another indent)
