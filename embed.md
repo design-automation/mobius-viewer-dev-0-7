@@ -13,7 +13,7 @@ The .gi file will need to be a public resource stored in one of the following se
 ## Url
 1. Base URL: 
     https://design-automation.github.io/mobius-viewer-dev-0-7/
-1. Append `?file=` and File url 
+1. Append `?file=` and the url of a Mobius javascript File.
 
 ## Embed
 You may include the url in the `src` attribute of an iframe.
@@ -48,7 +48,9 @@ For more information: [MDN Web Docs Iframe](https://developer.mozilla.org/en-US/
                 "*"
             )
 ```
-    * Update Settings
+   
+   * Update Settings
+    
 ```
         document.getElementById("mobius-viewer").contentWindow.postMessage(
                 {
